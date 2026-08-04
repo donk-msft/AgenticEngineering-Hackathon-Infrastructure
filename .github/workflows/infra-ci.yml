@@ -1,0 +1,42 @@
+name: infra-ci
+
+on:
+  pull_request:
+    paths:
+      - 'infra/**'
+      - 'scripts/validate-infra.sh'
+      - '.github/workflows/infra-ci.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/**'
+      - 'scripts/validate-infra.sh'
+      - '.github/workflows/infra-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Build and lint Bicep
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Azure CLI (if missing)
+        run: |
+          if ! command -v az >/dev/null 2>&1; then
+            curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash
+          fi
+
+      - name: Install Bicep
+        run: az bicep install
+
+      - name: Validate infrastructure
+        run: ./scripts/validate-infra.sh
+
+  # Expert Lab 1 extends this workflow with a what-if job authenticated through
+  # OIDC federated credentials. See docs/expert/lab-01-lifecycle.md.
