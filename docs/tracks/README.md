@@ -29,6 +29,9 @@ az deployment sub create \
   --location swedencentral \
   --template-file infra/main.bicep \
   --parameters infra/main.bicepparam
+
+# Run from a host connected to the SQL private endpoint as the configured Entra SQL administrator.
+./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
 ```
 
 …then deploy the shared application onto it:

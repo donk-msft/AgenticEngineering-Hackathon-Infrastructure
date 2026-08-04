@@ -109,5 +109,6 @@ output resourceGroupName string = rg.name
 output webAppName string = webapp.outputs.webAppName
 output webAppHostName string = webapp.outputs.defaultHostName
 output sqlServerName string = database.outputs.sqlServerName
+output databaseName string = database.outputs.databaseName
 output logAnalyticsWorkspaceId string = monitoring.outputs.logAnalyticsWorkspaceId
 output applicationInsightsName string = monitoring.outputs.applicationInsightsName

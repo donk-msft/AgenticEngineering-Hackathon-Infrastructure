@@ -126,6 +126,14 @@ az deployment sub create \
   --parameters infra/main.bicepparam
 ```
 
+From a private-network-connected host, run the idempotent SQL bootstrap as the configured Microsoft
+Entra SQL administrator. It creates the managed-identity user, its `db_datareader` grant and
+`dbo.Tickets` without enabling public SQL access:
+
+```bash
+./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
+```
+
 ---
 
 ## What's in This Repo

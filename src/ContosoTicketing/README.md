@@ -18,22 +18,16 @@ There are **no credentials in this app**. `ConnectionStrings__Default` is inject
 `infra/modules/webapp.bicep` and uses `Authentication=Active Directory Default`, so
 `Microsoft.Data.SqlClient` authenticates with the App Service system-assigned managed identity.
 
-Grant that identity access once, after the first deployment:
+After the infrastructure deployment, bootstrap the app identity, `db_datareader` grant and
+`dbo.Tickets` table with the idempotent script:
 
-```sql
-CREATE USER [app-ticketing-dev-swedencentral] FROM EXTERNAL PROVIDER;
-ALTER ROLE db_datareader ADD MEMBER [app-ticketing-dev-swedencentral];
+```bash
+./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
 ```
 
-Create the table the app reads:
-
-```sql
-CREATE TABLE dbo.Tickets (
-    Id     INT IDENTITY PRIMARY KEY,
-    Title  NVARCHAR(200) NOT NULL,
-    Status NVARCHAR(50)  NOT NULL
-);
-```
+Run it as the Microsoft Entra SQL administrator from a host that resolves the SQL server through
+its private endpoint. It uses `sqlcmd -G` (Azure CLI authentication); it neither requires nor
+creates a SQL password. Run it before deploying the app so `/readyz` is healthy end to end.
 
 ## Build, run and deploy
 
