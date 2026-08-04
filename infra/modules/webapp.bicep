@@ -66,6 +66,7 @@ module webApp 'br/public:avm/res/web/site:0.24.0' = {
         properties: {
           APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnectionString
           ConnectionStrings__Default: sqlConnectionString
+          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: '0'
         }
       }
     ]

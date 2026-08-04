@@ -36,6 +36,14 @@ param sqlAdminObjectId string
 @description('Display name of the Microsoft Entra principal that becomes the SQL Server administrator.')
 param sqlAdminLogin string
 
+@description('Microsoft Entra principal type of the SQL Server administrator.')
+@allowed([
+  'Group'
+  'Application'
+  'User'
+])
+param sqlAdminPrincipalType string = 'User'
+
 var regionToken = location
 var resourceGroupName = 'rg-${workload}-${environment}-${regionToken}'
 
@@ -88,6 +96,7 @@ module database 'modules/database.bicep' = {
     virtualNetworkId: networking.outputs.virtualNetworkId
     sqlAdminObjectId: sqlAdminObjectId
     sqlAdminLogin: sqlAdminLogin
+    sqlAdminPrincipalType: sqlAdminPrincipalType
   }
 }
 
