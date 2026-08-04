@@ -14,7 +14,7 @@ You are the fleet orchestrator. You split approved work across subagents and mer
 - `plan.md`
 - `docs/plan-review.md`
 - `docs/concepts/workload.md`
-- `.github/skills/contoso-baseline-guardrails/SKILL.md`
+- `docs/tracks/examples/intermediate/skills/contoso-baseline-guardrails/SKILL.md`
 
 ## Task
 

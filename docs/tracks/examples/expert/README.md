@@ -8,3 +8,5 @@ This folder shows how day-2 reliability and security work hands back into the da
 - [`handovers/`](handovers/) — issue-style handovers from operations signals to Copilot.
 
 The examples are sanitized and use placeholders for all environment values.
+
+These files demonstrate the conceptual handover chain that participants can trace when stuck. Lab 7 may consolidate parts of this chain into a single `.github/agents/sre.agent.md`; the examples keep the triage, planning, review and implementation responsibilities separate so the learning path is visible.

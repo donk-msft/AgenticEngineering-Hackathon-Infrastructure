@@ -2,6 +2,7 @@
 name: security-finding-reviewer
 description: Reviews GHAS or Defender findings and writes docs/security-finding-triage.md.
 tools: ['search', 'edit']
+handoffs: ['implementer-from-handover']
 ---
 
 ## Role
@@ -28,4 +29,4 @@ You are the security finding reviewer. You verify whether a finding is actionabl
 
 ## Handover
 
-This is terminal unless an implementation PR is needed. If one is needed, route to the relevant day-1 implementation agent with `docs/security-finding-triage.md`.
+Hand off to `@implementer-from-handover` when a source change is needed, with `docs/security-finding-triage.md` and the minimum safe fix area.

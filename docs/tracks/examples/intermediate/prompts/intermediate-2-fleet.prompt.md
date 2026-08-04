@@ -8,7 +8,7 @@ description: Fan out the approved plan with `/fleet` and merge the result.
 - `plan.md`
 - `docs/plan-review.md`
 - `docs/concepts/workload.md`
-- `.github/skills/contoso-baseline-guardrails/SKILL.md`
+- `docs/tracks/examples/intermediate/skills/contoso-baseline-guardrails/SKILL.md`
 
 ## Task
 

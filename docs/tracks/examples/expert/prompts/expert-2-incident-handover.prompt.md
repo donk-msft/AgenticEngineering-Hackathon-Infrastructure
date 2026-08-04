@@ -8,7 +8,7 @@ description: Convert an SRE Agent incident investigation into a Copilot-ready ha
 - `docs/operations-runbook.md`
 - `docs/concepts/fault-and-vulnerability.md`
 - `docs/concepts/workload.md`
-- `.github/skills/operations-feedback-loop/SKILL.md`
+- `docs/tracks/examples/expert/skills/operations-feedback-loop/SKILL.md`
 
 ## Task
 

@@ -14,7 +14,7 @@ You are the expert-track SRE triage agent. You summarize evidence from approved 
 - `docs/operations-runbook.md`
 - `docs/concepts/workload.md`
 - `docs/concepts/fault-and-vulnerability.md`
-- `.github/skills/operations-feedback-loop/SKILL.md`
+- `docs/tracks/examples/expert/skills/operations-feedback-loop/SKILL.md`
 
 ## Task
 

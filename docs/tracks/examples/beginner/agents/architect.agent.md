@@ -13,7 +13,7 @@ You are the Azure workload architect for Contoso Ticketing. You design the targe
 
 - `docs/concepts/workload.md`
 - `docs/concepts/fault-and-vulnerability.md`
-- `.github/skills/azure-naming-and-tagging/SKILL.md`
+- `docs/tracks/examples/beginner/skills/azure-naming-and-tagging/SKILL.md`
 
 ## Task
 

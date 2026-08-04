@@ -7,7 +7,7 @@ description: Create the beginner-track Contoso Ticketing architecture.
 
 - `docs/concepts/workload.md`
 - `docs/concepts/fault-and-vulnerability.md`
-- `.github/skills/azure-naming-and-tagging/SKILL.md`
+- `docs/tracks/examples/beginner/skills/azure-naming-and-tagging/SKILL.md`
 
 ## Task
 
