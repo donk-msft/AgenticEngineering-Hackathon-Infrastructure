@@ -8,6 +8,11 @@ Contoso runs an internal ticketing platform. It is a .NET web application with a
 database. It must be reachable over HTTPS from the corporate network, the database must never
 be reachable from the internet, and there must be enough telemetry to run it in production.
 
+The application is not hypothetical: [`src/ContosoTicketing`](../../src/ContosoTicketing/) is a
+minimal .NET 8 web API that every track deploys onto the App Service. Keeping the technology
+identical across the three tracks is what lets the expert labs break, scan and fix **your** code —
+see [the fault and vulnerability contract](fault-and-vulnerability.md).
+
 ## Architecture
 
 ```mermaid
@@ -47,6 +52,19 @@ flowchart TB
 | Private endpoint + DNS zone | `pep-sql-…`, `privatelink.database.windows.net` | Linked to the VNet |
 | Log Analytics + App Insights | `log-…`, `appi-…` | Workspace-based App Insights |
 
+## Required Application
+
+| Item | Requirement |
+|---|---|
+| Runtime | .NET 8 on Linux App Service (`DOTNETCORE\|8.0`) |
+| Source | [`src/ContosoTicketing`](../../src/ContosoTicketing/) — deploy it, or write an equivalent with the same routes |
+| Routes | `GET /healthz` (liveness), `GET /readyz` (checks SQL), `GET /api/tickets` |
+| Data access | `Microsoft.Data.SqlClient` with `Authentication=Active Directory Default` — managed identity, no password |
+| Telemetry | Application Insights SDK, connection string injected as an app setting |
+
+The routes are not decoration: `/healthz` backs the App Service health check, and `/readyz` and
+`/api/tickets` are the signals the expert track's SRE Agent labs alert and act on.
+
 ## Standards
 
 **Naming** — `<type>-<workload>-<environment>-<region>` (CAF).
@@ -65,11 +83,13 @@ flowchart TB
 - Bicep, modularised under `infra/modules/`.
 - Parameters in a `.bicepparam` file — no hardcoded subscription-specific values in templates.
 - `az bicep build` and `az bicep lint` must be clean, with **zero warnings**.
+- **Azure Verified Modules** for every resource, pinned to an exact version
+  (`br/public:avm/res/<provider>/<resource>:<version>` — never `latest`). The reference
+  implementation in [`infra/`](../../infra/) does this; use it as the interface reference.
 
-> 💡 **Azure Verified Modules**: the reference implementation uses native resource types so it
-> builds without registry access. Rewriting a module to use a pinned AVM module
-> (`br/public:avm/res/<provider>/<resource>:<version>` — never `latest`) is an excellent
-> stretch goal for any track.
+> 💡 **Pinned versions**: AVM modules evolve. Pin the version you validated against and upgrade
+> deliberately — `latest` turns every redeploy into an unreviewed change, which is the opposite of
+> the desired-state discipline expert Lab 2 builds on.
 
 ## Acceptance Criteria
 
@@ -85,7 +105,11 @@ Verify each of these against the **live** deployment, not against the template.
 - [ ] The web app has a system-assigned identity and no password or connection secret in app settings
 - [ ] `az webapp show --query httpsOnly` returns `true` and `minTlsVersion` is `1.2` or higher
 - [ ] Application Insights receives telemetry and is workspace-based
+- [ ] Every module in `infra/` uses a version-pinned Azure Verified Module
+- [ ] `GET https://<webapp>/healthz` returns `200`
+- [ ] `GET https://<webapp>/readyz` returns `200` — the app reaches SQL through the private endpoint using its managed identity
 - [ ] `./scripts/validate-infra.sh` passes
+- [ ] `dotnet build src/ContosoTicketing` passes
 
 ## Deliberate Extension Points
 
@@ -97,4 +121,5 @@ The workload is intentionally minimal so that the expert track has room to work:
 | No drift detection | Expert Lab 2 — desired state |
 | No CI security scanning | Expert Lab 5 — GHAS |
 | No cloud security posture | Expert Lab 6 — Defender for Cloud |
+| No injected fault or vulnerability yet | Expert Labs 4–6 — see [the contract](fault-and-vulnerability.md) |
 | Single region, no zone redundancy | Stretch goal for any track |

@@ -10,11 +10,16 @@ workload at three levels of agentic maturity.
 - The reference implementation is [`infra/`](../infra/). Participants write their own; do not
   silently overwrite theirs with the reference.
 - Everything is **Bicep**, modularised under `infra/modules/`, with parameters in `.bicepparam`.
-- Validate with `./scripts/validate-infra.sh`. **Warnings are failures.**
+- The application is [`src/ContosoTicketing`](../src/ContosoTicketing/) — a minimal .NET 8 web API.
+  All three tracks deploy the same infrastructure *and* the same application; keep them aligned.
+- Validate with `./scripts/validate-infra.sh` and `dotnet build src/ContosoTicketing`.
+  **Warnings are failures.**
 
 ## Non-negotiable standards
 
 - CAF naming: `<type>-<workload>-<environment>-<region>`.
+- Compose infrastructure from **Azure Verified Modules** pinned to an exact version
+  (`br/public:avm/res/<provider>/<resource>:<version>`) — never `latest`.
 - Every resource carries the tags `environment`, `workload`, `owner`, `costCenter`.
 - The database is never publicly reachable — private endpoint and private DNS only.
 - Managed identity for all Azure-to-Azure authentication. **Never** emit a password, connection
@@ -23,6 +28,9 @@ workload at three levels of agentic maturity.
   client secret.
 - NSGs use least privilege and include an explicit deny-all inbound rule.
 - TLS 1.2 minimum, HTTPS only, FTPS disabled.
+- Application SQL access is parameterised — never concatenate input into SQL text. The SQL
+  injection in [`docs/concepts/fault-and-vulnerability.md`](../docs/concepts/fault-and-vulnerability.md)
+  is a deliberate lab exercise and must never be merged to `main`.
 
 ## Documentation style
 

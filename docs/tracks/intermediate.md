@@ -23,9 +23,15 @@ flowchart LR
     F --> A2["subagent: database"]
     F --> A3["subagent: webapp"]
     F --> A4["subagent: monitoring"]
-    A1 & A2 & A3 & A4 --> M["merged infra/ + docs"]
+    F --> A5["subagent: app deploy"]
+    A1 & A2 & A3 & A4 & A5 --> M["merged infra/ + app + docs"]
     M --> V["/verify-and-deploy"]
 ```
+
+> 📌 **Same deliverable as the beginner track**: version-pinned Azure Verified Modules in `infra/`
+> *and* [`src/ContosoTicketing`](../../src/ContosoTicketing/) deployed to the App Service. Holding
+> the technology constant across tracks is what makes the expert labs work on your repository —
+> see [the fault and vulnerability contract](../concepts/fault-and-vulnerability.md).
 
 ---
 
@@ -73,9 +79,11 @@ Hand the approved plan to the orchestrator:
 
 ```
 /fleet Implement the approved plan for the Contoso Ticketing baseline. Create
-infra/main.bicep plus modules for networking, database, webapp and monitoring.
-Follow the standards in docs/concepts/workload.md exactly. Run ./scripts/validate-infra.sh
-and fix everything it reports before you finish.
+infra/main.bicep plus modules for networking, database, webapp and monitoring, each
+built from version-pinned Azure Verified Modules, and deploy src/ContosoTicketing to
+the App Service. Follow the standards in docs/concepts/workload.md exactly. Run
+./scripts/validate-infra.sh and dotnet build src/ContosoTicketing and fix everything
+they report before you finish.
 ```
 
 While it runs:

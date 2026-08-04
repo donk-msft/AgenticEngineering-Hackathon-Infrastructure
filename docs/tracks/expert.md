@@ -20,7 +20,20 @@ az deployment sub create \
   --parameters infra/main.bicepparam
 ```
 
+Then deploy the application, which Labs 3–6 alert on, break and scan:
+
+```bash
+dotnet publish src/ContosoTicketing -c Release -o /tmp/publish
+cd /tmp/publish && zip -r ../app.zip . && cd -
+az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
+  --name app-ticketing-dev-swedencentral --src-path /tmp/app.zip --type zip
+```
+
 > 🌍 Deploy in `swedencentral`, `eastus2` or `australiaeast` — the Azure SRE Agent is not available everywhere.
+
+> 📌 Labs 4–6 use one reproducible fault and one reproducible vulnerability, both defined in
+> [`docs/concepts/fault-and-vulnerability.md`](../concepts/fault-and-vulnerability.md). Read it
+> before Lab 3 so you know what the alerts and scans are aiming at.
 
 ---
 

@@ -28,7 +28,13 @@ flowchart LR
 | 4 | `iac-4-implement` | `@implementer` | `infra/**/*.bicep` |
 | 5 | `iac-5-test` | `@tester` | `docs/test-results.md` |
 | 6 | `iac-6-document` | `@documenter` | `docs/deployment-guide.md`, `docs/operations-runbook.md` |
-| 7 | `iac-7-deploy` | `@deployer` | Live Azure resources |
+| 7 | `iac-7-deploy` | `@deployer` | Live Azure resources **and** the deployed app |
+
+> 📌 **The deliverable is infrastructure *and* application.** Your `@implementer` writes the Bicep
+> using version-pinned [Azure Verified Modules](../concepts/workload.md#standards); your
+> `@deployer` also publishes [`src/ContosoTicketing`](../../src/ContosoTicketing/) to the App
+> Service. Same technology in every track — that is what lets the expert labs break and scan
+> *your* deployment. See [the fault and vulnerability contract](../concepts/fault-and-vulnerability.md).
 
 Reference versions of all of these live in [`.github/agents/`](../../.github/agents/) and [`.github/prompts/`](../../.github/prompts/). **Peek only when stuck** — writing them yourself is the point.
 
@@ -127,9 +133,19 @@ Between steps 4 and 5, validate locally:
 
 ```bash
 ./scripts/validate-infra.sh
+dotnet build src/ContosoTicketing
 ```
 
-✅ **Checkpoint**: the deployment succeeds and `az deployment sub show` reports `Succeeded`.
+Step 7 deploys both layers — the Bicep, then the application:
+
+```bash
+dotnet publish src/ContosoTicketing -c Release -o /tmp/publish
+cd /tmp/publish && zip -r ../app.zip . && cd -
+az webapp deploy --resource-group <rg> --name <webapp> --src-path /tmp/app.zip --type zip
+```
+
+✅ **Checkpoint**: the deployment succeeds, `az deployment sub show` reports `Succeeded`, and
+`curl https://<webapp>/healthz` returns `200`.
 
 ---
 

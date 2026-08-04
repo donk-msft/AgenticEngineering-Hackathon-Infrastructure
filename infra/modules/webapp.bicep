@@ -1,3 +1,5 @@
+metadata description = 'Compute tier for the Contoso Ticketing workload: Linux App Service with a system-assigned identity and regional VNet integration, built from Azure Verified Modules.'
+
 @description('Workload name used in CAF resource names.')
 param workload string
 
@@ -21,31 +23,35 @@ param sqlConnectionString string
 
 var suffix = '${workload}-${environment}-${location}'
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-12-01' = {
+module appServicePlan 'br/public:avm/res/web/serverfarm:0.7.0' = {
   name: 'asp-${suffix}'
-  location: location
-  tags: tags
-  sku: {
-    name: 'P0v3'
-    tier: 'PremiumV3'
-  }
-  properties: {
-    reserved: true
+  params: {
+    name: 'asp-${suffix}'
+    location: location
+    tags: tags
+    skuName: 'P0v3'
+    skuCapacity: 1
+    kind: 'linux'
+    zoneRedundant: false
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2023-12-01' = {
+module webApp 'br/public:avm/res/web/site:0.24.0' = {
   name: 'app-${suffix}'
-  location: location
-  tags: tags
-  identity: {
-    type: 'SystemAssigned'
-  }
-  properties: {
-    serverFarmId: appServicePlan.id
+  params: {
+    name: 'app-${suffix}'
+    location: location
+    tags: tags
+    kind: 'app,linux'
+    serverFarmResourceId: appServicePlan.outputs.resourceId
+    managedIdentities: {
+      systemAssigned: true
+    }
     httpsOnly: true
-    virtualNetworkSubnetId: appSubnetId
-    vnetRouteAllEnabled: true
+    virtualNetworkSubnetResourceId: appSubnetId
+    outboundVnetRouting: {
+      allTraffic: true
+    }
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|8.0'
       minTlsVersion: '1.2'
@@ -53,20 +59,19 @@ resource webApp 'Microsoft.Web/sites@2023-12-01' = {
       http20Enabled: true
       alwaysOn: true
       healthCheckPath: '/healthz'
-      appSettings: [
-        {
-          name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
-          value: applicationInsightsConnectionString
-        }
-        {
-          name: 'ConnectionStrings__Default'
-          value: sqlConnectionString
-        }
-      ]
     }
+    configs: [
+      {
+        name: 'appsettings'
+        properties: {
+          APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnectionString
+          ConnectionStrings__Default: sqlConnectionString
+        }
+      }
+    ]
   }
 }
 
-output webAppName string = webApp.name
-output defaultHostName string = webApp.properties.defaultHostName
-output principalId string = webApp.identity.principalId
+output webAppName string = webApp.outputs.name
+output defaultHostName string = webApp.outputs.defaultHostname
+output principalId string = webApp.outputs.?systemAssignedMIPrincipalId ?? ''

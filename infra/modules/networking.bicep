@@ -1,3 +1,5 @@
+metadata description = 'Network foundation for the Contoso Ticketing workload: VNet, delegated app subnet, private-endpoint subnet and least-privilege NSGs, built from Azure Verified Modules.'
+
 @description('Workload name used in CAF resource names.')
 param workload string
 
@@ -16,13 +18,26 @@ param logAnalyticsWorkspaceId string
 @description('Address space of the virtual network.')
 param addressPrefix string = '10.10.0.0/16'
 
+@description('Address prefix of the delegated App Service subnet.')
+param appSubnetPrefix string = '10.10.1.0/24'
+
+@description('Address prefix of the private endpoint subnet.')
+param privateEndpointSubnetPrefix string = '10.10.2.0/24'
+
 var suffix = '${workload}-${environment}-${location}'
 
-resource appNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
-  name: 'nsg-app-${environment}-${location}'
-  location: location
-  tags: tags
-  properties: {
+module appNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: 'nsg-app-${suffix}'
+  params: {
+    name: 'nsg-app-${environment}-${location}'
+    location: location
+    tags: tags
+    diagnosticSettings: [
+      {
+        name: 'diag-to-law'
+        workspaceResourceId: logAnalyticsWorkspaceId
+      }
+    ]
     securityRules: [
       {
         name: 'AllowHttpsInbound'
@@ -54,11 +69,18 @@ resource appNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
   }
 }
 
-resource privateEndpointNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01' = {
-  name: 'nsg-pep-${environment}-${location}'
-  location: location
-  tags: tags
-  properties: {
+module privateEndpointNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: 'nsg-pep-${suffix}'
+  params: {
+    name: 'nsg-pep-${environment}-${location}'
+    location: location
+    tags: tags
+    diagnosticSettings: [
+      {
+        name: 'diag-to-law'
+        workspaceResourceId: logAnalyticsWorkspaceId
+      }
+    ]
     securityRules: [
       {
         name: 'AllowSqlFromAppSubnet'
@@ -67,9 +89,9 @@ resource privateEndpointNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01'
           direction: 'Inbound'
           access: 'Allow'
           protocol: 'Tcp'
-          sourceAddressPrefix: '10.10.1.0/24'
+          sourceAddressPrefix: appSubnetPrefix
           sourcePortRange: '*'
-          destinationAddressPrefix: '10.10.2.0/24'
+          destinationAddressPrefix: privateEndpointSubnetPrefix
           destinationPortRange: '1433'
         }
       }
@@ -90,61 +112,31 @@ resource privateEndpointNsg 'Microsoft.Network/networkSecurityGroups@2024-05-01'
   }
 }
 
-resource virtualNetwork 'Microsoft.Network/virtualNetworks@2024-05-01' = {
+module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
   name: 'vnet-${suffix}'
-  location: location
-  tags: tags
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        addressPrefix
-      ]
-    }
+  params: {
+    name: 'vnet-${suffix}'
+    location: location
+    tags: tags
+    addressPrefixes: [
+      addressPrefix
+    ]
     subnets: [
       {
         name: 'snet-app'
-        properties: {
-          addressPrefix: '10.10.1.0/24'
-          networkSecurityGroup: {
-            id: appNsg.id
-          }
-          delegations: [
-            {
-              name: 'appServiceDelegation'
-              properties: {
-                serviceName: 'Microsoft.Web/serverFarms'
-              }
-            }
-          ]
-        }
+        addressPrefix: appSubnetPrefix
+        networkSecurityGroupResourceId: appNsg.outputs.resourceId
+        delegation: 'Microsoft.Web/serverFarms'
       }
       {
         name: 'snet-privateendpoints'
-        properties: {
-          addressPrefix: '10.10.2.0/24'
-          networkSecurityGroup: {
-            id: privateEndpointNsg.id
-          }
-        }
+        addressPrefix: privateEndpointSubnetPrefix
+        networkSecurityGroupResourceId: privateEndpointNsg.outputs.resourceId
       }
     ]
   }
 }
 
-resource appNsgDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
-  name: 'diag-to-law'
-  scope: appNsg
-  properties: {
-    workspaceId: logAnalyticsWorkspaceId
-    logs: [
-      {
-        categoryGroup: 'allLogs'
-        enabled: true
-      }
-    ]
-  }
-}
-
-output virtualNetworkId string = virtualNetwork.id
-output appSubnetId string = virtualNetwork.properties.subnets[0].id
-output privateEndpointSubnetId string = virtualNetwork.properties.subnets[1].id
+output virtualNetworkId string = virtualNetwork.outputs.resourceId
+output appSubnetId string = virtualNetwork.outputs.subnetResourceIds[0]
+output privateEndpointSubnetId string = virtualNetwork.outputs.subnetResourceIds[1]

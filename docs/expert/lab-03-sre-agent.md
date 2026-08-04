@@ -58,10 +58,15 @@ in a new `infra/modules/alerts.bicep`, so they are part of the desired state fro
 |---|---|---|
 | App HTTP 5xx | `Http5xx` > 5 in 5 min | 2 |
 | App response time | Average > 3 s over 5 min | 3 |
-| App availability | Health check failing | 1 |
+| App availability | App Service health check (`/healthz`) failing | 1 |
+| App readiness | Availability test against `/readyz` failing | 1 |
 | SQL DTU/CPU | > 85% for 10 min | 3 |
 
 The sre-agent-workshop keeps alerts in `scenarios/<id>/infra/bicep/modules/alert.bicep` — same idea.
+The `/healthz` and `/readyz` routes come from [`src/ContosoTicketing`](../../src/ContosoTicketing/),
+which every track deploys, so these alerts work on any team's baseline. The readiness alert is the
+**working SRE check** that Lab 4 then breaks — see
+[the fault and vulnerability contract](../concepts/fault-and-vulnerability.md).
 
 Have your `@implementer` agent write the module, then validate and deploy:
 
@@ -76,7 +81,7 @@ Have your `@implementer` agent write the module, then validate and deploy:
 Create `knowledge/` in your repo and add the operational context the agent should use:
 
 - `knowledge/architecture.md` — a short version of your architecture and dependencies
-- `knowledge/runbook-http-500.md` — how to diagnose 5xx in this workload
+- `knowledge/runbook-http-500.md` — how to diagnose a 5xx from `/api/tickets` and a 503 from `/readyz` in this workload
 - `knowledge/escalation.md` — what may be auto-remediated and what must page a human
 
 This is exactly the beginner track's **skill** concept, applied to an operations agent.

@@ -35,12 +35,13 @@ model if you want it reproducible rather than clicked.
 
 ## 2. CodeQL in CI (15 min)
 
-Add a CodeQL workflow. Your IaC repo has at least two analysable languages:
+Add a CodeQL workflow. Your repository has two analysable languages:
 
 - **`actions`** — scans your workflow YAML itself (see `infra.yml` in the reference repo)
-- **`javascript`/`java`/etc.** — whichever the Contoso Ticketing app is written in
+- **`csharp`** — [`src/ContosoTicketing`](../../src/ContosoTicketing/), the .NET 8 API every track deploys
 
-Add a `.github/codeql-config.yml` to scope paths and query suites.
+Add a `.github/codeql-config.yml` to scope paths and query suites. Extend the existing
+`app-ci` workflow rather than creating a parallel one.
 
 ✅ **Checkpoint**: a CodeQL run appears under the **Security** tab.
 
@@ -50,11 +51,15 @@ Alerts nobody blocks on are decoration. The reference `backend-ci.yml` parses th
 **fails the job** when any finding has `security-severity >= 7.0` (High/Critical). Implement the
 same gate.
 
-Then prove it. On a branch, introduce a deliberate vulnerability — the reference repo's
-`scripts/seed-vulnerabilities.md` documents good candidates, such as SQL injection through string
-concatenation. Open a PR.
+Then prove it with the vulnerability defined in
+[`docs/concepts/fault-and-vulnerability.md`](../concepts/fault-and-vulnerability.md): on a branch,
+replace the parameterised query in `GET /api/tickets` with string concatenation of a query-string
+value, and open a PR. CodeQL must raise **CWE-89, SQL injection** at `security-severity` ≥ 7.0.
 
-✅ **Checkpoint**: the PR is blocked by a failing CodeQL check. Revert the vulnerability; the PR goes green.
+✅ **Checkpoint**: the PR is blocked by a failing CodeQL check.
+
+Now fix it **with the tooling** — assign the CodeQL alert to Copilot and review its PR rather than
+reverting by hand. Keep the branch: Lab 6 traces this same finding to the running resources.
 
 ## 4. Push protection (10 min)
 
@@ -68,7 +73,7 @@ Push protection is the backstop for when someone — or some agent — reaches f
 ## 5. Dependency review and Dependabot (5 min)
 
 - [ ] `actions/dependency-review-action@v4` runs on pull requests
-- [ ] `.github/dependabot.yml` covers every ecosystem in the repo, including `github-actions`
+- [ ] `.github/dependabot.yml` covers every ecosystem in the repo — `nuget` for `src/`, plus `github-actions`
 
 ## 6. Make it required (10 min)
 
@@ -83,8 +88,8 @@ Extend the branch protection from Lab 1 on `main`:
 ## Definition of Done
 
 - [ ] Secret scanning + push protection, code scanning, dependency graph and Dependabot all enabled
-- [ ] CodeQL runs in CI over both `actions` and the application language
-- [ ] A High/Critical finding **fails** the PR — demonstrated, then reverted
+- [ ] CodeQL runs in CI over both `actions` and `csharp`
+- [ ] The SQL injection from the [shared contract](../concepts/fault-and-vulnerability.md) **fails** the PR — demonstrated, then fixed by Copilot
 - [ ] A pushed secret was **blocked** — demonstrated
 - [ ] `main` requires both CodeQL and `infra-ci`
 

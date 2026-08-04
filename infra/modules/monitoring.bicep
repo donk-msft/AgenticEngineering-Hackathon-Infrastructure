@@ -1,3 +1,5 @@
+metadata description = 'Monitoring for the Contoso Ticketing workload: Log Analytics and workspace-based Application Insights, built from Azure Verified Modules.'
+
 @description('Workload name used in CAF resource names.')
 param workload string
 
@@ -12,39 +14,37 @@ param tags object
 
 var suffix = '${workload}-${environment}-${location}'
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
-  name: 'log-${suffix}'
-  location: location
-  tags: tags
-  properties: {
-    sku: {
-      name: 'PerGB2018'
-    }
-    retentionInDays: 30
+module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.16.1' = {
+  name: 'law-${suffix}'
+  params: {
+    name: 'log-${suffix}'
+    location: location
+    tags: tags
+    skuName: 'PerGB2018'
+    dataRetention: 30
     features: {
       enableLogAccessUsingOnlyResourcePermissions: true
     }
   }
 }
 
-resource applicationInsights 'Microsoft.Insights/components@2020-02-02' = {
+module applicationInsights 'br/public:avm/res/insights/component:0.8.0' = {
   name: 'appi-${suffix}'
-  location: location
-  tags: tags
-  kind: 'web'
-  properties: {
-    Application_Type: 'web'
-    WorkspaceResourceId: logAnalytics.id
-    IngestionMode: 'LogAnalytics'
-    publicNetworkAccessForIngestion: 'Enabled'
-    publicNetworkAccessForQuery: 'Enabled'
+  params: {
+    name: 'appi-${suffix}'
+    location: location
+    tags: tags
+    applicationType: 'web'
+    kind: 'web'
+    workspaceResourceId: logAnalytics.outputs.resourceId
+    retentionInDays: 30
   }
 }
 
-output logAnalyticsWorkspaceId string = logAnalytics.id
-output logAnalyticsWorkspaceName string = logAnalytics.name
-output applicationInsightsName string = applicationInsights.name
+output logAnalyticsWorkspaceId string = logAnalytics.outputs.resourceId
+output logAnalyticsWorkspaceName string = logAnalytics.outputs.name
+output applicationInsightsName string = applicationInsights.outputs.name
 
 @description('Application Insights connection string. Treated as a configuration value, not a secret credential.')
 #disable-next-line outputs-should-not-contain-secrets
-output applicationInsightsConnectionString string = applicationInsights.properties.ConnectionString
+output applicationInsightsConnectionString string = applicationInsights.outputs.connectionString

@@ -72,12 +72,14 @@ one of the two is wrong. Decide which, and update it.
 
 ## 4. Code-to-cloud correlation (10 min)
 
-This is the money moment. Take the CodeQL finding you created in Lab 5, put it back on a branch,
-and trace it forward:
+This is the money moment. Take the SQL injection from
+[the shared contract](../concepts/fault-and-vulnerability.md) that Lab 5 raised, put it back on a
+branch, and trace it forward:
 
 1. GHAS raises the finding in the repository.
 2. The Defender GitHub connector surfaces it as a DevOps security recommendation in Azure.
-3. Defender ties that recommendation to the **running** Contoso Ticketing resources.
+3. Defender ties that recommendation to the **running** `app-ticketing-…` and `sql-ticketing-…`
+   resources — the same application code the beginner and intermediate tracks deployed.
 
 Now you can answer the question neither tool answers alone: *does this code vulnerability actually
 put a live, internet-reachable resource at risk?* That is what turns a backlog into a priority order.
@@ -87,9 +89,16 @@ Remove the deliberate vulnerability afterwards.
 ## 5. Prevention, not just detection (5 min)
 
 Extend the Azure Policy work from Lab 2 with a Defender-driven deny. The reference repo denies
-vulnerable container images from being admitted to AKS. Your workload has no containers, so pick the
-equivalent for your tier — for example deny App Service plans without Defender coverage, or deny
-SQL servers without vulnerability assessment enabled.
+vulnerable container images from being admitted to AKS; the Contoso Ticketing stack is PaaS, so the
+equivalent control point is resource admission rather than pod admission. Deploy at least one
+**deny** policy for your tier, for example:
+
+- deny `Microsoft.Sql/servers` where `publicNetworkAccess` is not `Disabled`
+- deny `Microsoft.Sql/servers` without vulnerability assessment enabled
+- deny `Microsoft.Web/sites` where `httpsOnly` is false or `minTlsVersion` is below `1.2`
+
+Prove it the same way Lab 5 proved the CodeQL gate: attempt the non-compliant deployment from a
+branch and confirm the deployment is **denied**, not merely flagged. Then revert.
 
 ## 6. Cleanup
 
@@ -104,8 +113,8 @@ desired-state driven.
 - [ ] Defender plans enabled **as code** in `infra/`, including DevOps security
 - [ ] GitHub connector deployed and authorised; your repository is listed under DevOps security
 - [ ] The posture questionnaire above is answered and any conflict with the desired-state contract is resolved
-- [ ] A GHAS finding was traced end-to-end to the running workload, then removed
-- [ ] At least one preventive policy exists
+- [ ] The SQL injection was traced end-to-end from the repository to the running App Service and SQL server, then fixed
+- [ ] At least one preventive **deny** policy exists and was demonstrated blocking a non-compliant deployment
 - [ ] Cleanup plan agreed
 
 ➡️ Next: [Lab 7 — Close the loop](lab-07-close-the-loop.md)

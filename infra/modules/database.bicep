@@ -1,3 +1,5 @@
+metadata description = 'Data tier for the Contoso Ticketing workload: Azure SQL with public access disabled, Entra-only authentication and a private endpoint with private DNS, built from Azure Verified Modules.'
+
 @description('Workload name used in CAF resource names.')
 param workload string
 
@@ -26,15 +28,30 @@ var suffix = '${workload}-${environment}-${location}'
 var sqlServerName = 'sql-${suffix}'
 var databaseName = 'sqldb-${suffix}'
 
-resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
-  name: sqlServerName
-  location: location
-  tags: tags
-  identity: {
-    type: 'SystemAssigned'
+module privateDnsZone 'br/public:avm/res/network/private-dns-zone:0.8.1' = {
+  name: 'pdns-sql-${suffix}'
+  params: {
+    name: 'privatelink${az.environment().suffixes.sqlServerHostname}'
+    tags: tags
+    virtualNetworkLinks: [
+      {
+        name: 'link-${suffix}'
+        virtualNetworkResourceId: virtualNetworkId
+        registrationEnabled: false
+      }
+    ]
   }
-  properties: {
-    version: '12.0'
+}
+
+module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
+  name: 'sql-${suffix}'
+  params: {
+    name: sqlServerName
+    location: location
+    tags: tags
+    managedIdentities: {
+      systemAssigned: true
+    }
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Disabled'
     administrators: {
@@ -45,61 +62,33 @@ resource sqlServer 'Microsoft.Sql/servers@2023-08-01-preview' = {
       sid: sqlAdminObjectId
       tenantId: tenant().tenantId
     }
-  }
-}
-
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01-preview' = {
-  parent: sqlServer
-  name: databaseName
-  location: location
-  tags: tags
-  sku: {
-    name: 'GP_S_Gen5'
-    tier: 'GeneralPurpose'
-    family: 'Gen5'
-    capacity: 1
-  }
-  properties: {
-    zoneRedundant: false
-    autoPauseDelay: 60
-    minCapacity: json('0.5')
-  }
-}
-
-resource privateDnsZone 'Microsoft.Network/privateDnsZones@2024-06-01' = {
-  name: 'privatelink${az.environment().suffixes.sqlServerHostname}'
-  location: 'global'
-  tags: tags
-}
-
-resource privateDnsZoneLink 'Microsoft.Network/privateDnsZones/virtualNetworkLinks@2024-06-01' = {
-  parent: privateDnsZone
-  name: 'link-${suffix}'
-  location: 'global'
-  tags: tags
-  properties: {
-    registrationEnabled: false
-    virtualNetwork: {
-      id: virtualNetworkId
-    }
-  }
-}
-
-resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-05-01' = {
-  name: 'pep-${sqlServerName}'
-  location: location
-  tags: tags
-  properties: {
-    subnet: {
-      id: privateEndpointSubnetId
-    }
-    privateLinkServiceConnections: [
+    databases: [
       {
-        name: 'sql'
-        properties: {
-          privateLinkServiceId: sqlServer.id
-          groupIds: [
-            'sqlServer'
+        name: databaseName
+        tags: tags
+        sku: {
+          name: 'GP_S_Gen5'
+          tier: 'GeneralPurpose'
+          family: 'Gen5'
+          capacity: 1
+        }
+        autoPauseDelay: 60
+        minCapacity: '0.5'
+        zoneRedundant: false
+        availabilityZone: -1
+      }
+    ]
+    privateEndpoints: [
+      {
+        name: 'pep-${sqlServerName}'
+        service: 'sqlServer'
+        subnetResourceId: privateEndpointSubnetId
+        tags: tags
+        privateDnsZoneGroup: {
+          privateDnsZoneGroupConfigs: [
+            {
+              privateDnsZoneResourceId: privateDnsZone.outputs.resourceId
+            }
           ]
         }
       }
@@ -107,23 +96,8 @@ resource privateEndpoint 'Microsoft.Network/privateEndpoints@2024-05-01' = {
   }
 }
 
-resource privateDnsZoneGroup 'Microsoft.Network/privateEndpoints/privateDnsZoneGroups@2024-05-01' = {
-  parent: privateEndpoint
-  name: 'default'
-  properties: {
-    privateDnsZoneConfigs: [
-      {
-        name: 'sql'
-        properties: {
-          privateDnsZoneId: privateDnsZone.id
-        }
-      }
-    ]
-  }
-}
-
-output sqlServerName string = sqlServer.name
-output databaseName string = sqlDatabase.name
+output sqlServerName string = sqlServer.outputs.name
+output databaseName string = databaseName
 
 @description('Passwordless connection string. Authentication happens through the web app managed identity, so no secret is emitted.')
-output connectionString string = 'Server=tcp:${sqlServer.name}${az.environment().suffixes.sqlServerHostname},1433;Database=${sqlDatabase.name};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;'
+output connectionString string = 'Server=tcp:${sqlServer.outputs.fullyQualifiedDomainName},1433;Database=${databaseName};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;'

@@ -24,7 +24,7 @@ sequenceDiagram
     participant Cop as GitHub Copilot
     participant CI as GitHub Actions
 
-    App->>Mon: HTTP 500 on /tickets/export
+    App->>Mon: HTTP 500 on /api/tickets, 503 on /readyz
     Mon->>SRE: alert fires
     SRE->>SRE: investigate (logs, KQL, Resource Graph)
     SRE->>You: findings + proposed action
@@ -36,18 +36,24 @@ sequenceDiagram
 
 ## 1. Prepare the fault (20 min)
 
-You need a reproducible, route-specific failure. Pick one:
+The fault is defined once, for all tracks, in
+[`docs/concepts/fault-and-vulnerability.md`](../concepts/fault-and-vulnerability.md). Read it now.
 
-**Option A — application fault** (mirrors `cloud-agent-handover`). Add an endpoint to the web app
-that throws on a specific route, deploy it, then call the route.
+First confirm the **working** state — this is the SRE check that must pass before you break it:
 
-**Option B — infrastructure fault** (no app code needed). Break the app's data path — for example
-remove the web app identity's database role assignment, or detach the private DNS zone link.
-The app starts returning 500s while the platform looks healthy.
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/readyz   # expect 200
+curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/api/tickets  # expect 200
+```
+
+Then inject exactly one of injections **A**, **B** or **C** from that document — a dropped database
+role membership, a deleted private DNS virtual network link, or a removed NSG rule. All three make
+`/api/tickets` return `500` and `/readyz` return `503`, and each leaves a different trail in
+telemetry.
 
 > ⚠️ Do this **outside** your IaC, by hand. Lab 2 taught you that source is the desired state; here
-> you are deliberately creating drift so the agents have something real to find. Note exactly what
-> you changed — you will compare it to the SRE Agent's conclusion.
+> you are deliberately creating drift so the agents have something real to find. Write down exactly
+> what you changed, and do not tell the agent — you will compare your note to its conclusion.
 
 ## 2. Trigger and observe (20 min)
 
@@ -86,6 +92,7 @@ Merge it and let CI deploy through the OIDC pipeline.
 
 ## 5. Verify and close (5 min)
 
+- [ ] `GET /readyz` returns `200` and `GET /api/tickets` returns `200` again
 - [ ] The alert has resolved
 - [ ] `az deployment sub what-if` reports no drift
 - [ ] The incident, investigation and fix are captured in `docs/operations-runbook.md`

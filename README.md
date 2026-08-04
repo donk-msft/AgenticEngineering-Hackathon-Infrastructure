@@ -50,9 +50,14 @@ flowchart TB
     app --> law
 ```
 
+On top of it runs [`src/ContosoTicketing`](src/ContosoTicketing/) — a minimal .NET 8 API exposing
+`/healthz`, `/readyz` and `/api/tickets`. Every track deploys the **same** infrastructure *and* the
+**same** application, which is what lets the expert labs break, scan and fix your own deployment.
+See [the fault and vulnerability contract](docs/concepts/fault-and-vulnerability.md).
+
 **Non-negotiable standards** (all tracks are graded on these):
 
-- Bicep, CAF naming `<type>-<workload>-<env>-<region>`, tags `environment`, `workload`, `owner`, `costCenter`
+- Bicep with version-pinned **Azure Verified Modules**, CAF naming `<type>-<workload>-<env>-<region>`, tags `environment`, `workload`, `owner`, `costCenter`
 - No public database access — Private Endpoint + private DNS only
 - Managed identity everywhere — **no passwords, no connection-string secrets**
 - NSGs with an explicit deny-all rule, TLS 1.2+, HTTPS only
@@ -108,6 +113,7 @@ Then open the guide for your track and follow it. To validate any Bicep you (or 
 
 ```bash
 ./scripts/validate-infra.sh
+dotnet build src/ContosoTicketing
 ```
 
 To deploy the reference baseline directly (expert fast-start):
@@ -132,15 +138,17 @@ az deployment sub create \
 │   ├── prompts/                         # 📖 Reference prompts, numbered per track
 │   ├── instructions/                    # 🤖 Auto-activating Copilot guidelines
 │   ├── workflows/infra-ci.yml           # Bicep build + lint on every PR
+│   ├── workflows/app-ci.yml             # dotnet build on every PR; CodeQL target in Lab 5
 │   └── copilot-instructions.md          # Workspace-wide Copilot context
 ├── .vscode/mcp.json                     # Azure, Learn and GitHub MCP servers
 ├── docs/
 │   ├── tracks/{beginner,intermediate,expert}.md
-│   ├── concepts/                        # Workload spec, agent anatomy, handovers
+│   ├── concepts/                        # Workload spec, agent anatomy, handovers, fault & vulnerability contract
 │   └── expert/                          # SRE Agent + GHAS/Defender labs
 ├── infra/                               # 📦 The shared Contoso Ticketing baseline
 │   ├── main.bicep · main.bicepparam
 │   └── modules/{networking,database,webapp,monitoring}.bicep
+├── src/ContosoTicketing/                # 📦 The shared .NET 8 application
 └── scripts/validate-infra.sh
 ```
 

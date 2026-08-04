@@ -20,10 +20,15 @@ You do not redesign, and you do not deploy to Azure.
 1. Write `infra/main.bicep` (subscription scope) and one module per concern under `infra/modules/`.
 2. Put all environment-specific values in `infra/main.bicepparam`.
 3. Run `./scripts/validate-infra.sh` and fix everything it reports, including warnings.
+4. Build the application with `dotnet build src/ContosoTicketing` and keep the app settings the
+   templates emit in step with the configuration it reads.
 
 # Constraints
 
 - Bicep only. Every parameter and output has a `@description`.
+- Compose from **Azure Verified Modules** pinned to an exact version
+  (`br/public:avm/res/<provider>/<resource>:<version>`). Never use `latest`, and never hand-roll a
+  resource type an AVM module already covers.
 - CAF naming and the four required tags on every resource.
 - `publicNetworkAccess` disabled on data services; private endpoint plus private DNS zone.
 - System-assigned managed identity for Azure-to-Azure authentication.

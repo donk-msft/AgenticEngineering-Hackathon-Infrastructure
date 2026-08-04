@@ -17,6 +17,8 @@ only amplify the problem otherwise.
 
 - [ ] The whole workload can be redeployed from source with a single command
 - [ ] `./scripts/validate-infra.sh` passes
+- [ ] `dotnet build src/ContosoTicketing` passes and the app is deployed to the App Service
+- [ ] Every module in `infra/` uses a version-pinned Azure Verified Module
 - [ ] A `.bicepparam` (or equivalent) holds all environment-specific values — no hardcoded ids in templates
 
 Expert Lab 2 uses `what-if` as a drift detector; that only works if source is the source of truth.
@@ -32,6 +34,7 @@ If not, redeploy into a supported region before Lab 3. Do it with your pipeline,
 - [ ] A Log Analytics workspace exists in the resource group
 - [ ] Application Insights is workspace-based and receiving telemetry
 - [ ] At least the web app and NSGs send diagnostics to the workspace
+- [ ] `GET /healthz` returns `200` and `GET /readyz` returns `200` — the labs alert on both
 
 The SRE Agent investigates using Azure Monitor data. No telemetry, no investigation.
 
@@ -64,6 +67,7 @@ Note these — the expert labs reference them:
 | SQL server name | |
 | Log Analytics workspace name | |
 | GitHub repository | |
+| Web app default host name | |
 
 ---
 

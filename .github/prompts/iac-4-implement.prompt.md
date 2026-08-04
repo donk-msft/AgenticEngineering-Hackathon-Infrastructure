@@ -11,7 +11,8 @@ description: Implement the approved architecture as validated Bicep.
 # Task
 
 Acting as `@implementer`, write `infra/main.bicep`, `infra/main.bicepparam` and one module per
-concern under `infra/modules/`. Then run `./scripts/validate-infra.sh` and fix everything it reports.
+concern under `infra/modules/`, composed from version-pinned Azure Verified Modules. Then run
+`./scripts/validate-infra.sh` and `dotnet build src/ContosoTicketing`, and fix everything they report.
 
 # Expected output
 
@@ -21,5 +22,7 @@ concern under `infra/modules/`. Then run `./scripts/validate-infra.sh` and fix e
 # Done when
 
 - `./scripts/validate-infra.sh` exits 0 with no warnings.
+- `dotnet build src/ContosoTicketing` succeeds.
+- Every module references an AVM module at a pinned version — no `latest`.
 - No password, key or connection secret appears anywhere in `infra/`.
 - Every resource uses CAF naming and carries all four required tags.
