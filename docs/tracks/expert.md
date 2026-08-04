@@ -55,6 +55,8 @@ flowchart LR
 
 The loop back is the point: day-2 signals become day-1 work items, handled by agents.
 
+If the handover loop is unclear, inspect the sanitized examples in [`examples/expert/`](examples/expert/). They show participant-style SRE triage, remediation planning, security review, operations skills and issue handovers without live environment values.
+
 ---
 
 ## Labs
