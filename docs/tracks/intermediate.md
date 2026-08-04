@@ -48,6 +48,8 @@ flowchart LR
 
 > 📌 **Ground rule**: you may run at most **five** top-level prompts for the whole track. Count them. Fewer is better, but only if the acceptance criteria still pass.
 
+> 🧭 **Stuck?** Use the sanitized reference set in [`examples/intermediate/`](examples/intermediate/) to see how a participant-produced plan reviewer, fleet orchestrator, guardrail skill, prompts and handovers can fit together without storing environment values.
+
 ---
 
 ## Step 1 — Plan Mode (40 min)
