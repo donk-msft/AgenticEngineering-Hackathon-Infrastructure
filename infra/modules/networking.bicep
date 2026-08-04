@@ -40,19 +40,6 @@ module appNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
     ]
     securityRules: [
       {
-        name: 'AllowHttpsInbound'
-        properties: {
-          priority: 100
-          direction: 'Inbound'
-          access: 'Allow'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'Internet'
-          sourcePortRange: '*'
-          destinationAddressPrefix: 'VirtualNetwork'
-          destinationPortRange: '443'
-        }
-      }
-      {
         name: 'DenyAllInbound'
         properties: {
           priority: 4096
