@@ -1,0 +1,29 @@
+{
+  "name": "Agentic Engineering Hackathon — Infrastructure",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-24.04",
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {
+      "version": "latest",
+      "installBicep": true
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {
+      "version": "latest"
+    },
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "ms-azuretools.vscode-bicep",
+        "ms-azuretools.vscode-azureresourcegroups",
+        "bierner.markdown-mermaid"
+      ]
+    }
+  },
+  "postCreateCommand": "az bicep install && chmod +x scripts/*.sh",
+  "remoteUser": "vscode"
+}
