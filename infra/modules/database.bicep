@@ -57,9 +57,9 @@ module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
     administrators: {
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
+      // For principalType 'User', `login` should be the user's UPN (e.g., `az ad signed-in-user show --query userPrincipalName -o tsv`).
       principalType: 'User'
       login: sqlAdminLogin
-      sid: sqlAdminObjectId
       tenantId: tenant().tenantId
     }
     databases: [
