@@ -43,9 +43,11 @@ An empty table or output is the expected result for the required-tag and secret-
 Preview changes using the same parameter file and location as the deployment:
 
 ```bash
+deployment_location="$(az deployment sub show --name "$deployment_name" --query location -o tsv)"
+
 az deployment sub what-if \
   --name "${deployment_name}-drift" \
-  --location swedencentral \
+  --location "$deployment_location" \
   --template-file infra/main.bicep \
   --parameters infra/main.bicepparam \
   --result-format ResourceIdOnly
