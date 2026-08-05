@@ -68,9 +68,11 @@ Classify differences before acting:
 After review and approval, redeploy the committed desired state:
 
 ```bash
+deployment_location="$(az deployment sub show --name "$deployment_name" --query location -o tsv)"
+
 az deployment sub create \
   --name "$deployment_name" \
-  --location swedencentral \
+  --location "$deployment_location" \
   --template-file infra/main.bicep \
   --parameters infra/main.bicepparam
 ```
