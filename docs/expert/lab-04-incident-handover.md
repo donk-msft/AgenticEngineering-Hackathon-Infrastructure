@@ -46,6 +46,12 @@ curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/read
 curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/api/tickets  # expect 200
 ```
 
+If readiness has never returned `200`, do not inject a fault. Complete the private SQL bootstrap in
+[`docs/operations-runbook.md`](../operations-runbook.md) using the original subscription deployment
+name. The App Service managed identity cannot create its own SQL principal; the configured Entra
+SQL administrator must establish that initial data-plane authorization from a private-network
+connected host.
+
 Then inject exactly one of injections **A**, **B** or **C** from that document — a dropped database
 role membership, a deleted private DNS virtual network link, or a removed NSG rule. All three make
 `/api/tickets` return `500` and `/readyz` return `503`, and each leaves a different trail in

@@ -11,3 +11,4 @@ param costCenter = 'hackathon'
 //   az ad group show --group "<group-name>" --query "{id:id, name:displayName}"
 param sqlAdminObjectId = '00000000-0000-0000-0000-000000000000'
 param sqlAdminLogin = 'sg-hackathon-sqladmins'
+param sqlAdminPrincipalType = 'Group'

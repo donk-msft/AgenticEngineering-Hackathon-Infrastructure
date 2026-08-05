@@ -49,6 +49,21 @@ Record the agent name and its managed identity; Lab 4 needs both.
 
 ✅ **Checkpoint**: the agent lists your web app, SQL server and Log Analytics workspace as in-scope resources.
 
+### Confirm the SQL data-plane bootstrap
+
+Before asking the agent to investigate readiness, complete the private-network bootstrap in
+[`docs/operations-runbook.md`](../operations-runbook.md). Pass the **subscription deployment name**
+used with `az deployment sub create --name`; this is how the script resolves the workload outputs:
+
+```bash
+./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
+```
+
+Run it as the configured Entra SQL administrator from a host connected to the workload VNet. The
+App Service managed identity cannot create its own contained database user: it has no SQL
+authorization until the administrator creates that principal. Never enable public SQL access or
+introduce a password to bypass this bootstrap.
+
 ## 4. Give it signals (15 min)
 
 An agent with no alerts has nothing to investigate. Add alert rules to `infra/` — **as code**,
@@ -60,7 +75,7 @@ in a new `infra/modules/alerts.bicep`, so they are part of the desired state fro
 | App response time | Average > 3 s over 5 min | 3 |
 | App availability | App Service health check (`/healthz`) failing | 1 |
 | App readiness | Availability test against `/readyz` failing | 1 |
-| SQL DTU/CPU | > 85% for 10 min | 3 |
+| SQL DTU/CPU | > 85%; 15 min (nearest Azure Monitor-supported window to the 10 min lab target) | 3 |
 
 The sre-agent-workshop keeps alerts in `scenarios/<id>/infra/bicep/modules/alert.bicep` — same idea.
 The `/healthz` and `/readyz` routes come from [`src/ContosoTicketing`](../../src/ContosoTicketing/),
@@ -73,6 +88,10 @@ Have your `@implementer` agent write the module, then validate and deploy:
 ```bash
 ./scripts/validate-infra.sh
 ```
+
+The reference module intentionally leaves `actions` empty because action-group destinations are
+environment-specific. Connect the rules to the SRE Agent or an approved action group after
+deployment.
 
 ✅ **Checkpoint**: alert rules are deployed and visible to the SRE Agent.
 

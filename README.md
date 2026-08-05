@@ -146,7 +146,9 @@ Entra SQL administrator. It creates the managed-identity user, its `db_datareade
 │   ├── prompts/                         # 📖 Reference prompts, numbered per track
 │   ├── instructions/                    # 🤖 Auto-activating Copilot guidelines
 │   ├── workflows/infra-ci.yml           # Bicep build + lint on every PR
-│   ├── workflows/app-ci.yml             # dotnet build on every PR; CodeQL target in Lab 5
+│   ├── workflows/app-ci.yml             # .NET build, CodeQL and dependency review
+│   ├── codeql-config.yml                 # CodeQL scope and security query suite
+│   ├── dependabot.yml                    # NuGet and GitHub Actions updates
 │   └── copilot-instructions.md          # Workspace-wide Copilot context
 ├── .vscode/mcp.json                     # Azure, Learn and GitHub MCP servers
 ├── docs/
@@ -155,7 +157,8 @@ Entra SQL administrator. It creates the managed-identity user, its `db_datareade
 │   └── expert/                          # SRE Agent + GHAS/Defender labs
 ├── infra/                               # 📦 The shared Contoso Ticketing baseline
 │   ├── main.bicep · main.bicepparam
-│   └── modules/{networking,database,webapp,monitoring}.bicep
+│   └── modules/{networking,database,webapp,monitoring,alerts}.bicep
+├── knowledge/                           # Azure SRE Agent architecture, runbook and escalation policy
 ├── src/ContosoTicketing/                # 📦 The shared .NET 8 application
 └── scripts/validate-infra.sh
 ```

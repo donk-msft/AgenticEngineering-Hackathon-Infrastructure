@@ -24,6 +24,14 @@ param sqlAdminObjectId string
 @description('Display name of the Microsoft Entra principal that becomes the SQL Server administrator.')
 param sqlAdminLogin string
 
+@description('Microsoft Entra principal type of the SQL Server administrator.')
+@allowed([
+  'Group'
+  'Application'
+  'User'
+])
+param sqlAdminPrincipalType string
+
 var suffix = '${workload}-${environment}-${location}'
 var sqlServerName = 'sql-${suffix}'
 var databaseName = 'sqldb-${suffix}'
@@ -57,8 +65,7 @@ module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
     administrators: {
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
-      // For principalType 'User', `login` should be the user's UPN (e.g., `az ad signed-in-user show --query userPrincipalName -o tsv`).
-      principalType: 'User'
+      principalType: sqlAdminPrincipalType
       login: sqlAdminLogin
       tenantId: tenant().tenantId
     }

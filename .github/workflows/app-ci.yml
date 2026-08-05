@@ -4,13 +4,17 @@ on:
   pull_request:
     paths:
       - 'src/**'
-      - '.github/workflows/app-ci.yml'
+      - '.github/workflows/**'
+      - '.github/codeql-config.yml'
+      - '.github/dependabot.yml'
   push:
     branches:
       - main
     paths:
       - 'src/**'
-      - '.github/workflows/app-ci.yml'
+      - '.github/workflows/**'
+      - '.github/codeql-config.yml'
+      - '.github/dependabot.yml'
   workflow_dispatch:
 
 permissions:
@@ -22,15 +26,92 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v6
         with:
           dotnet-version: '8.0.x'
 
       - name: Build
         run: dotnet build src/ContosoTicketing/ContosoTicketing.csproj --configuration Release
 
-  # Expert Lab 5 adds CodeQL (`csharp` and `actions`) to this workflow and fails the
-  # job on findings with security-severity >= 7.0. See docs/expert/lab-05-ghas.md.
+  dependency-review:
+    name: Review dependency changes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Review dependencies
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      packages: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language:
+          - actions
+          - csharp
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+          build-mode: ${{ matrix.language == 'csharp' && 'manual' || 'none' }}
+
+      - name: Set up .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build C# for CodeQL
+        if: matrix.language == 'csharp'
+        run: dotnet build src/ContosoTicketing/ContosoTicketing.csproj --configuration Release
+
+      - name: Analyze with CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: /language:${{ matrix.language }}
+          output: sarif-results
+          upload: always
+
+      - name: Gate high-severity security findings
+        shell: bash
+        run: |
+          sarif_file="$(find sarif-results -name '*.sarif' -print -quit)"
+          if [[ -z "$sarif_file" ]]; then
+            echo "CodeQL did not produce a SARIF file." >&2
+            exit 1
+          fi
+
+          high_findings="$(
+            jq '[
+              .runs[] as $run
+              | $run.results[]? as $result
+              | $run.tool.driver.rules[]?
+              | select(.id == $result.ruleId)
+              | ((.properties["security-severity"] // "0") | tonumber)
+              | select(. >= 7.0)
+            ] | length' "$sarif_file"
+          )"
+
+          echo "CodeQL high/critical security findings: $high_findings"
+          test "$high_findings" -eq 0
