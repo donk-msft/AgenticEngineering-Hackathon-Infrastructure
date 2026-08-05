@@ -1,0 +1,12 @@
+name: Contoso Ticketing CodeQL configuration
+
+queries:
+  - uses: security-extended
+
+paths:
+  - src/ContosoTicketing
+  - .github/workflows
+
+paths-ignore:
+  - '**/bin'
+  - '**/obj'

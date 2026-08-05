@@ -114,6 +114,22 @@ module webapp 'modules/webapp.bicep' = {
   }
 }
 
+module alerts 'modules/alerts.bicep' = {
+  scope: rg
+  name: 'alerts'
+  params: {
+    workload: workload
+    environment: environment
+    location: location
+    tags: tags
+    webAppName: webapp.outputs.webAppName
+    webAppHostName: webapp.outputs.defaultHostName
+    sqlServerName: database.outputs.sqlServerName
+    databaseName: database.outputs.databaseName
+    applicationInsightsName: monitoring.outputs.applicationInsightsName
+  }
+}
+
 output resourceGroupName string = rg.name
 output webAppName string = webapp.outputs.webAppName
 output webAppHostName string = webapp.outputs.defaultHostName
