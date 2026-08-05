@@ -66,8 +66,9 @@ introduce a password to bypass this bootstrap.
 
 ## 4. Give it signals (15 min)
 
-An agent with no alerts has nothing to investigate. Add alert rules to `infra/` — **as code**,
-in a new `infra/modules/alerts.bicep`, so they are part of the desired state from Lab 2:
+An agent with no alerts has nothing to investigate. The reference baseline already includes
+`infra/modules/alerts.bicep`; verify that your rolled-up implementation has equivalent rules, then
+customise it **as code** to route the alerts to the SRE Agent or an approved action group:
 
 | Alert | Signal | Severity |
 |---|---|---|

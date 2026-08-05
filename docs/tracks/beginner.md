@@ -2,7 +2,7 @@
 
 **Goal**: build the [Contoso Ticketing baseline](../concepts/workload.md) by hand-crafting a multi-agent pipeline, so you understand what an *agent*, a *skill*, a *prompt* and a *handover* actually are.
 
-**Duration**: ~4 hours · **Prerequisite**: Copilot Chat basics
+**Duration**: ~3 hours 45 minutes (excluding Azure propagation) · **Prerequisite**: Copilot Chat basics
 
 > This track is the guided version of **Use Case 1 (Infrastructure as Code)** from
 > [bram-boer/code-under-construction-hackathon](https://github.com/bram-boer/code-under-construction-hackathon/blob/main/docs/use-case-iac.md).
@@ -40,22 +40,29 @@ Reference versions of all of these live in [`.github/agents/`](../../.github/age
 
 ---
 
-## Step 0 — Set Up (20 min)
+## Step 0 — Set Up (15 min)
 
-1. Open the repo in **Codespaces** (or VS Code with the devcontainer). Tools install automatically.
-2. Sign in to Azure and confirm the subscription with your coach:
+1. Fork the repository, clone **your fork**, and open it in Codespaces or VS Code. In VS Code, run
+   **Dev Containers: Reopen in Container**; Azure CLI, Bicep and the Bicep extension are installed
+   there. Azure Cloud Shell is also supported for Bash deployment commands.
+2. In `infra/main.bicepparam`, choose a unique `workload` or `environment` token and replace the
+   placeholder SQL administrator object ID and login with an Entra group or user in your tenant.
+   This avoids resource-name collisions and makes the later database bootstrap possible.
+3. Sign in to Azure and confirm the subscription with your coach:
    ```bash
    az login
    az account show --query "{name:name, id:id, tenantId:tenantId}" -o table
    ```
-3. Open `.vscode/mcp.json` and start the **Azure MCP** and **Learn MCP** servers. Confirm in Copilot Chat that the tools are listed.
-4. Read [`docs/concepts/workload.md`](../concepts/workload.md) as a team. **This is your requirement document.**
+4. In VS Code, enable the `azure`, `microsoft-docs`, and `github` MCP servers from
+   `.vscode/mcp.json`, then restart Copilot Chat and confirm their tools are listed. This needs
+   outbound npm access.
+5. Read [`docs/concepts/workload.md`](../concepts/workload.md) as a team. **This is your requirement document.**
 
 > ℹ️ Because a fresh workspace has no `infra/` of your own, work in a branch. The reference `infra/` in this repo is your safety net — you may compare against it at any time, but write your own first.
 
 ---
 
-## Step 1 — Understand the Four Building Blocks (20 min)
+## Step 1 — Understand the Four Building Blocks (15 min)
 
 Read [`docs/concepts/agentic-building-blocks.md`](../concepts/agentic-building-blocks.md). In one line each:
 
@@ -68,7 +75,7 @@ Read [`docs/concepts/agentic-building-blocks.md`](../concepts/agentic-building-b
 
 ---
 
-## Step 2 — Write Your First Agent (30 min)
+## Step 2 — Write Your First Agent (20 min)
 
 Create `.github/agents/architect.agent.md`. Start typing and Copilot auto-loads
 [`agents.instructions.md`](../../.github/instructions/agents.instructions.md), which coaches you through the frontmatter live.
@@ -92,7 +99,7 @@ Then run it: `@architect design the Contoso Ticketing workload described in docs
 
 ---
 
-## Step 3 — Add a Skill (20 min)
+## Step 3 — Add a Skill (15 min)
 
 Your architect keeps guessing module versions. Give it knowledge instead.
 
@@ -104,7 +111,7 @@ architect agent. Re-run step 2 and observe the difference.
 
 ---
 
-## Step 4 — Write the Remaining Six Agents (45 min)
+## Step 4 — Write the Remaining Six Agents (30 min)
 
 Split across the team — one agent each. Every agent must declare:
 
@@ -117,7 +124,7 @@ Split across the team — one agent each. Every agent must declare:
 
 ---
 
-## Step 5 — Write the Prompts (30 min)
+## Step 5 — Write the Prompts (20 min)
 
 One `.prompt.md` per step, numbered `iac-1-…` through `iac-7-…`. Each prompt states its **inputs** (files to read), its **task**, and its **expected output**. Editing a `.prompt.md` auto-loads [`prompt.instructions.md`](../../.github/instructions/prompt.instructions.md).
 
@@ -136,7 +143,8 @@ Between steps 4 and 5, validate locally:
 dotnet build src/ContosoTicketing
 ```
 
-Step 7 deploys both layers — the Bicep, then the application:
+Step 7 deploys both layers — the Bicep, then the application. Run these Bash commands from Cloud
+Shell or the dev container:
 
 ```bash
 dotnet publish src/ContosoTicketing -c Release -o /tmp/publish
@@ -144,14 +152,24 @@ cd /tmp/publish && zip -r ../app.zip . && cd -
 az webapp deploy --resource-group <rg> --name <webapp> --src-path /tmp/app.zip --type zip
 ```
 
+After publishing, switch to a host connected to the workload VNet and run
+`./scripts/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured
+Entra SQL administrator. Do not run this from ordinary Cloud Shell: it cannot normally resolve the
+SQL private endpoint.
+
 ✅ **Checkpoint**: the deployment succeeds, `az deployment sub show` reports `Succeeded`, and
-`curl https://<webapp>/healthz` returns `200`.
+`/healthz`, `/readyz` and `/api/tickets` all return `200`. This proves the app uses managed identity
+through the private endpoint, rather than merely proving the web process started.
 
 ---
 
 ## Step 7 — Verify (25 min)
 
-Walk the [acceptance criteria](../concepts/workload.md#acceptance-criteria) one by one. Everything must pass — an agentic pipeline that produces a non-compliant deployment has not succeeded.
+Walk the [acceptance criteria](../concepts/workload.md#acceptance-criteria) one by one against live
+Azure resources. Record the results. The desired end state includes approved SQL private endpoint
+and private DNS, both NSGs with deny-all inbound, required tags, managed identity without secrets,
+HTTPS/TLS settings, workspace-based telemetry, and all three application routes healthy. Everything
+must pass — an agentic pipeline that produces a non-compliant deployment has not succeeded.
 
 ---
 

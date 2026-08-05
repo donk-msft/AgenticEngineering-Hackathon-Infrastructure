@@ -2,7 +2,7 @@
 
 **Goal**: take the deployed [Contoso Ticketing baseline](../concepts/workload.md) from "it deployed" to "it stays healthy and it is secure end-to-end" — infrastructure that is architected, planned, tested, built, deployed **and documented**, kept in a desired, reliable state by the **Azure SRE Agent**, and protected code-to-cloud by **GHAS + Microsoft Defender for Cloud**.
 
-**Duration**: ~6 hours · **Prerequisite**: a deployed baseline
+**Duration**: ~4 hours for a team running the reliability and security lanes in parallel; ~6 hours solo · **Prerequisite**: a deployed baseline
 
 ---
 
@@ -28,6 +28,18 @@ cd /tmp/publish && zip -r ../app.zip . && cd -
 az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
   --name app-ticketing-dev-swedencentral --src-path /tmp/app.zip --type zip
 ```
+
+Then, from a host connected to the workload VNet, run the one-time bootstrap as the configured
+Microsoft Entra SQL administrator:
+
+```bash
+./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
+```
+
+Ordinary Cloud Shell cannot normally reach the SQL private endpoint. The starting state is ready
+only when `/healthz`, `/readyz` and `/api/tickets` return `200`, Application Insights receives
+telemetry, and the SQL server remains private. Use the [roll-up checklist](../concepts/rollup-checklist.md)
+to record the resource names and prove this same state before starting either lane.
 
 > 🌍 Deploy in `swedencentral`, `eastus2` or `australiaeast` — the Azure SRE Agent is not available everywhere.
 
@@ -63,15 +75,17 @@ If the handover loop is unclear, inspect the sanitized examples in [`examples/ex
 
 | # | Lab | Focus | Time |
 |---|---|---|---|
-| 1 | [Lifecycle hardening](../expert/lab-01-lifecycle.md) | Make the pipeline itself testable, repeatable and documented; CI on every PR | 60 min |
-| 2 | [Desired state & drift](../expert/lab-02-desired-state.md) | What-if as a drift detector; guard rails via Azure Policy | 45 min |
-| 3 | [Onboard the Azure SRE Agent](../expert/lab-03-sre-agent.md) | Connect the SRE Agent to the resource group and to GitHub | 60 min |
-| 4 | [Incident → agent handover](../expert/lab-04-incident-handover.md) | Inject a fault, watch SRE Agent investigate, approve the handover to Copilot, ship the fix | 75 min |
-| 5 | [GHAS on the IaC repo](../expert/lab-05-ghas.md) | CodeQL, secret scanning + push protection, dependency review, branch protection | 60 min |
-| 6 | [Defender for Cloud & code-to-cloud](../expert/lab-06-defender.md) | Defender plans, the GitHub connector, correlating a GHAS finding with the running workload | 60 min |
-| 7 | [Close the loop](../expert/lab-07-close-the-loop.md) | Route reliability and security findings back into the agentic pipeline | 45 min |
+| 1 | [Lifecycle hardening](../expert/lab-01-lifecycle.md) | Make the pipeline itself testable, repeatable and documented; CI on every PR | 35 min |
+| 2 | [Desired state & drift](../expert/lab-02-desired-state.md) | What-if as a drift detector; guard rails via Azure Policy | 25 min |
+| 3 | [Onboard the Azure SRE Agent](../expert/lab-03-sre-agent.md) | Connect the SRE Agent to the resource group and to GitHub | 35 min |
+| 4 | [Incident → agent handover](../expert/lab-04-incident-handover.md) | Inject a fault, watch SRE Agent investigate, approve the handover to Copilot, ship the fix | 50 min |
+| 5 | [GHAS on the IaC repo](../expert/lab-05-ghas.md) | CodeQL, secret scanning + push protection, dependency review, branch protection | 35 min |
+| 6 | [Defender for Cloud & code-to-cloud](../expert/lab-06-defender.md) | Defender plans, the GitHub connector, correlating a GHAS finding with the running workload | 40 min |
+| 7 | [Close the loop](../expert/lab-07-close-the-loop.md) | Route reliability and security findings back into the agentic pipeline | 25 min |
 
-Labs 1–2 are prerequisites for the rest. Labs 3–4 (reliability) and 5–6 (security) can run in parallel if you split the team.
+Labs 1–2 are prerequisites for the rest. Run Labs 3–4 (reliability) and 5–6 (security) in parallel
+after Lab 2, then reconvene for Lab 7. Azure and GitHub propagation can take longer than the
+hands-on time; while waiting, complete the evidence and review tasks rather than extending the lab.
 
 ---
 
