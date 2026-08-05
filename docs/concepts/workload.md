@@ -117,9 +117,9 @@ The workload is intentionally minimal so that the expert track has room to work:
 
 | Gap | Picked up by |
 |---|---|
-| No alert rules yet | Expert Lab 3 — SRE Agent onboarding |
+| Alert routing is environment-specific | Expert Lab 3 — connect the baseline rules to the SRE Agent or an approved action group |
 | No drift detection | Expert Lab 2 — desired state |
-| No CI security scanning | Expert Lab 5 — GHAS |
+| GHAS repository features and required checks need administrator enablement | Expert Lab 5 — GHAS |
 | No cloud security posture | Expert Lab 6 — Defender for Cloud |
 | No injected fault or vulnerability yet | Expert Labs 4–6 — see [the contract](fault-and-vulnerability.md) |
 | Single region, no zone redundancy | Stretch goal for any track |
