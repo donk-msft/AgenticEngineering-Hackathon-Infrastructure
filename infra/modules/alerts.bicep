@@ -174,7 +174,10 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
 resource readinessAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
   name: 'alert-app-readyz-${suffix}'
   location: 'global'
-  tags: tags
+  tags: union(tags, {
+    'hidden-link:${applicationInsightsResourceId}': 'Resource'
+    'hidden-link:${readinessTest.id}': 'Resource'
+  })
   properties: {
     description: 'The /readyz availability test failed from at least two test locations.'
     severity: 1
