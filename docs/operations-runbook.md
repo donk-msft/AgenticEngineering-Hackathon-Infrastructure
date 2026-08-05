@@ -82,4 +82,3 @@ resource group.
 
 Never inject a lab fault into Bicep or `main`. Expert Lab 4 faults are temporary, manually recorded
 drift and must be reconciled from source after the exercise.
-

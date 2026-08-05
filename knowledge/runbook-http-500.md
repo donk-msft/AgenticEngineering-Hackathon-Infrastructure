@@ -56,4 +56,3 @@ unauthorized.
 Confirm all three routes return `200`, the alert resolves, and `az deployment sub what-if` shows no
 unexplained drift. Record symptom, telemetry, root cause, exact remediation, approver, validation,
 and any required repository change in the incident handover.
-

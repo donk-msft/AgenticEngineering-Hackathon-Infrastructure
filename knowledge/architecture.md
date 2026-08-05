@@ -37,4 +37,3 @@ authorization.
 
 Never remediate an incident by enabling SQL public access, adding a password, weakening TLS/HTTPS,
 removing the NSG deny rule, or committing runtime drift.
-

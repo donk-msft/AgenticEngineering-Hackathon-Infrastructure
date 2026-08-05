@@ -28,4 +28,3 @@ Every escalation or GitHub issue must include:
 
 Do not include access tokens, credentials, connection secrets, customer data, or raw sensitive log
 payloads.
-
