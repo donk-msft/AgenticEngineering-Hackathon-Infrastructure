@@ -67,7 +67,6 @@ module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
       azureADOnlyAuthentication: true
       principalType: sqlAdminPrincipalType
       login: sqlAdminLogin
-      sid: sqlAdminObjectId
       tenantId: tenant().tenantId
     }
     databases: [
