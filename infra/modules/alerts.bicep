@@ -1,4 +1,4 @@
-metadata description = 'Operational alert rules and readiness availability test for Contoso Ticketing, implemented with native Azure Monitor resources.'
+metadata description = 'Operational alert rules and readiness availability test for Contoso Ticketing, composed from Azure Verified Modules.'
 
 @description('Workload name used in CAF resource names.')
 param workload string
@@ -33,23 +33,21 @@ var databaseResourceId = resourceId('Microsoft.Sql/servers/databases', sqlServer
 var applicationInsightsResourceId = resourceId('Microsoft.Insights/components', applicationInsightsName)
 var readinessTestName = 'webtest-readyz-${suffix}'
 
-resource readinessTest 'Microsoft.Insights/webtests@2022-06-15' = {
-  name: readinessTestName
-  location: location
-  kind: 'standard'
-  tags: union(tags, {
-    'hidden-link:${applicationInsightsResourceId}': 'Resource'
-  })
-  properties: {
-    SyntheticMonitorId: readinessTestName
-    Name: readinessTestName
-    Description: 'Validates that the application can reach SQL through private networking and managed identity.'
-    Enabled: true
-    Frequency: 300
-    Timeout: 30
-    Kind: 'standard'
-    RetryEnabled: true
-    Locations: [
+module readinessTest 'br/public:avm/res/insights/webtest:0.3.2' = {
+  name: 'readiness-webtest'
+  params: {
+    name: readinessTestName
+    webTestName: readinessTestName
+    appInsightResourceId: applicationInsightsResourceId
+    location: location
+    tags: tags
+    description: 'Validates that the application can reach SQL through private networking and managed identity.'
+    kind: 'standard'
+    enabled: true
+    frequency: 300
+    timeout: 30
+    retryEnabled: true
+    locations: [
       {
         Id: 'emea-nl-ams-azr'
       }
@@ -60,13 +58,13 @@ resource readinessTest 'Microsoft.Insights/webtests@2022-06-15' = {
         Id: 'emea-gb-db3-azr'
       }
     ]
-    Request: {
+    request: {
       RequestUrl: 'https://${webAppHostName}/readyz'
       HttpVerb: 'GET'
       FollowRedirects: true
       ParseDependentRequests: false
     }
-    ValidationRules: {
+    validationRules: {
       ExpectedHttpStatusCode: 200
       IgnoreHttpStatusCode: false
       SSLCheck: true
@@ -75,14 +73,14 @@ resource readinessTest 'Microsoft.Insights/webtests@2022-06-15' = {
   }
 }
 
-resource http5xxAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'alert-app-http5xx-${suffix}'
-  location: 'global'
-  tags: tags
-  properties: {
-    description: 'App Service returned more than five HTTP 5xx responses in five minutes.'
+module http5xxAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
+  name: 'alert-app-http5xx'
+  params: {
+    name: 'alert-app-http5xx-${suffix}'
+    alertDescription: 'App Service returned more than five HTTP 5xx responses in five minutes.'
     severity: 2
     enabled: true
+    tags: tags
     scopes: [
       webAppResourceId
     ]
@@ -90,7 +88,7 @@ resource http5xxAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     windowSize: 'PT5M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
-      allOf: [
+      allof: [
         {
           name: 'Http5xxThreshold'
           metricNamespace: 'Microsoft.Web/sites'
@@ -103,18 +101,17 @@ resource http5xxAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
         }
       ]
     }
-    actions: []
   }
 }
 
-resource responseTimeAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'alert-app-response-${suffix}'
-  location: 'global'
-  tags: tags
-  properties: {
-    description: 'App Service average response time exceeded three seconds over five minutes.'
+module responseTimeAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
+  name: 'alert-app-response'
+  params: {
+    name: 'alert-app-response-${suffix}'
+    alertDescription: 'App Service average response time exceeded three seconds over five minutes.'
     severity: 3
     enabled: true
+    tags: tags
     scopes: [
       webAppResourceId
     ]
@@ -122,7 +119,7 @@ resource responseTimeAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     windowSize: 'PT5M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
-      allOf: [
+      allof: [
         {
           name: 'AverageResponseTimeThreshold'
           metricNamespace: 'Microsoft.Web/sites'
@@ -135,18 +132,17 @@ resource responseTimeAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
         }
       ]
     }
-    actions: []
   }
 }
 
-resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'alert-app-health-${suffix}'
-  location: 'global'
-  tags: tags
-  properties: {
-    description: 'App Service health-check status for /healthz fell below 100 percent.'
+module healthCheckAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
+  name: 'alert-app-health'
+  params: {
+    name: 'alert-app-health-${suffix}'
+    alertDescription: 'App Service health-check status for /healthz fell below 100 percent.'
     severity: 1
     enabled: true
+    tags: tags
     scopes: [
       webAppResourceId
     ]
@@ -154,7 +150,7 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     windowSize: 'PT5M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
-      allOf: [
+      allof: [
         {
           name: 'HealthCheckStatusThreshold'
           metricNamespace: 'Microsoft.Web/sites'
@@ -167,45 +163,43 @@ resource healthCheckAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
         }
       ]
     }
-    actions: []
   }
 }
 
-resource readinessAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'alert-app-readyz-${suffix}'
-  location: 'global'
-  tags: union(tags, {
-    'hidden-link:${applicationInsightsResourceId}': 'Resource'
-    'hidden-link:${readinessTest.id}': 'Resource'
-  })
-  properties: {
-    description: 'The /readyz availability test failed from at least two test locations.'
+module readinessAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
+  name: 'alert-app-readyz'
+  params: {
+    name: 'alert-app-readyz-${suffix}'
+    alertDescription: 'The /readyz availability test failed from at least two test locations.'
     severity: 1
     enabled: true
+    tags: union(tags, {
+      'hidden-link:${applicationInsightsResourceId}': 'Resource'
+      'hidden-link:${readinessTest.outputs.resourceId}': 'Resource'
+    })
     scopes: [
-      readinessTest.id
+      readinessTest.outputs.resourceId
       applicationInsightsResourceId
     ]
     evaluationFrequency: 'PT1M'
     windowSize: 'PT5M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.WebtestLocationAvailabilityCriteria'
-      webTestId: readinessTest.id
-      componentId: applicationInsightsResourceId
+      webTestResourceId: readinessTest.outputs.resourceId
+      componentResourceId: applicationInsightsResourceId
       failedLocationCount: 2
     }
-    actions: []
   }
 }
 
-resource sqlCpuAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
-  name: 'alert-sql-cpu-${suffix}'
-  location: 'global'
-  tags: tags
-  properties: {
-    description: 'Azure SQL average CPU exceeded 85 percent over the supported 15-minute window.'
+module sqlCpuAlert 'br/public:avm/res/insights/metric-alert:0.4.1' = {
+  name: 'alert-sql-cpu'
+  params: {
+    name: 'alert-sql-cpu-${suffix}'
+    alertDescription: 'Azure SQL average CPU exceeded 85 percent over the supported 15-minute window.'
     severity: 3
     enabled: true
+    tags: tags
     scopes: [
       databaseResourceId
     ]
@@ -213,7 +207,7 @@ resource sqlCpuAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
     windowSize: 'PT15M'
     criteria: {
       'odata.type': 'Microsoft.Azure.Monitor.SingleResourceMultipleMetricCriteria'
-      allOf: [
+      allof: [
         {
           name: 'CpuThreshold'
           metricNamespace: 'Microsoft.Sql/servers/databases'
@@ -226,6 +220,5 @@ resource sqlCpuAlert 'Microsoft.Insights/metricAlerts@2018-03-01' = {
         }
       ]
     }
-    actions: []
   }
 }
