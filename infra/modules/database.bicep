@@ -57,7 +57,7 @@ module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
     administrators: {
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
-      principalType: 'Group'
+      principalType: 'User'
       login: sqlAdminLogin
       sid: sqlAdminObjectId
       tenantId: tenant().tenantId
