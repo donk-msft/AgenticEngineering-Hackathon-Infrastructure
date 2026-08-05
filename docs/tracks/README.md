@@ -21,6 +21,26 @@ flowchart LR
 
 Beginner and intermediate teams that finish early **continue into the expert track** using their own deployment — no reset, no redesign. Complete the [handover checklist](../concepts/rollup-checklist.md) first; it verifies your deployment matches the baseline contract the expert labs assume.
 
+## Participant deployment preflight
+
+Work in a fork owned by your team and deploy to your own subscription. Before creating resources:
+
+1. In `infra/main.bicepparam`, choose a unique `workload` or `environment` token and your SRE-Agent
+   region. This produces unique CAF resource names.
+2. Replace the sample SQL administrator object ID and login with a Microsoft Entra group or user in
+   your tenant. The group/user must be able to sign in to Azure SQL for the one-time bootstrap.
+3. Confirm the signed-in subscription is yours: `az account show -o table`.
+4. Decide where each action runs:
+
+| Action | Cloud Shell, Copilot CLI or VS Code terminal | Private-network-connected host |
+|---|---|---|
+| Validate, what-if, deploy Bicep and publish the app | ✅ | ✅ |
+| Run `bootstrap-ticketing-database.sh` | Usually no | ✅ Required |
+| Verify public app routes | ✅ | ✅ |
+
+Cloud Shell is not normally connected to your workload VNet, so it cannot resolve the SQL private
+endpoint. Do not enable SQL public access to work around this boundary.
+
 Teams starting directly at expert deploy the reference baseline in one command:
 
 ```bash
@@ -42,6 +62,10 @@ cd /tmp/publish && zip -r ../app.zip . && cd -
 az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
   --name app-ticketing-dev-swedencentral --src-path /tmp/app.zip --type zip
 ```
+
+Finally, run `./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline` from
+the private-network-connected host as the configured Entra SQL administrator. The expected
+end state is `/healthz`, `/readyz` and `/api/tickets` returning `200`, with SQL still private.
 
 ## Scoring
 

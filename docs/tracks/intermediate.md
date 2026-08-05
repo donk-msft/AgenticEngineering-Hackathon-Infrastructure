@@ -2,7 +2,7 @@
 
 **Goal**: deliver the *same* [Contoso Ticketing baseline](../concepts/workload.md) as the beginner track, but using the latest Copilot capabilities — **plan mode (`/plan`)**, **agent fleets (`/fleet`)**, custom agents and background sessions — so the pipeline collapses from ~7 prompts to ~3.
 
-**Duration**: ~4 hours · **Prerequisite**: the beginner track, or you already write custom agents and prompts
+**Duration**: ~3 hours 45 minutes (excluding Azure propagation) · **Prerequisite**: the beginner track, or you already write custom agents and prompts
 
 ---
 
@@ -35,16 +35,23 @@ flowchart LR
 
 ---
 
-## Step 0 — Set Up (15 min)
+## Step 0 — Set Up (20 min)
 
-1. Codespaces or devcontainer, then `az login` and confirm the subscription with your coach.
-2. Install and authenticate the **Copilot CLI** (`/fleet` lives there, and VS Code can host CLI sessions):
+1. Fork and clone the repository, then open it in Codespaces or VS Code and run **Dev Containers:
+   Reopen in Container**. In `infra/main.bicepparam`, choose a unique workload/environment token
+   and replace the sample SQL administrator object ID and login with values from your tenant.
+2. Run `az login` and confirm the subscription with your coach. Your team must deploy to its own
+   subscription.
+3. Install and authenticate the **Copilot CLI**; `/fleet` runs in its interactive terminal:
    ```bash
    npm install -g @github/copilot
    copilot
    ```
-3. Start the **Azure MCP** and **Learn MCP** servers from `.vscode/mcp.json`.
-4. Read [`docs/concepts/workload.md`](../concepts/workload.md) — again, it is your requirement document.
+4. Use VS Code Copilot Chat for **Plan** mode (`/plan`). Enable the `azure`, `microsoft-docs`, and
+   `github` MCP servers from `.vscode/mcp.json`, restart Chat, and confirm their tools are listed.
+   If your Copilot plan or CLI version does not expose `/fleet`, use the supplied orchestrator
+   example to run the same work with parallel custom agents; do not skip the review gates.
+5. Read [`docs/concepts/workload.md`](../concepts/workload.md) — again, it is your requirement document.
 
 > 📌 **Ground rule**: you may run at most **five** top-level prompts for the whole track. Count them. Fewer is better, but only if the acceptance criteria still pass.
 
@@ -52,7 +59,7 @@ flowchart LR
 
 ---
 
-## Step 1 — Plan Mode (40 min)
+## Step 1 — Plan Mode (35 min)
 
 Open Copilot Chat, choose the **Plan** agent (or type `/plan`), and give it the requirement document rather than a solution:
 
@@ -75,7 +82,7 @@ Then **iterate the plan, not the code**. Push back until:
 
 ---
 
-## Step 2 — Fan Out With `/fleet` (60 min)
+## Step 2 — Fan Out With `/fleet` (55 min)
 
 Hand the approved plan to the orchestrator:
 
@@ -100,7 +107,7 @@ While it runs:
 
 ---
 
-## Step 3 — Verify, Deploy and Document (60 min)
+## Step 3 — Verify, Deploy and Document (55 min)
 
 One more prompt should be enough:
 
@@ -110,11 +117,17 @@ acceptance criterion in docs/concepts/workload.md against the live resources and
 docs/test-results.md and docs/operations-runbook.md.
 ```
 
-✅ **Checkpoint**: deployment `Succeeded`, all acceptance criteria pass, evidence documents exist.
+Publish the application with the Bash commands in [the track entry guide](README.md), then run
+`./scripts/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured
+Entra SQL administrator from a host connected to the workload VNet. Cloud Shell is normally not
+such a host; never make SQL public to bypass this.
+
+✅ **Checkpoint**: deployment `Succeeded`; the private endpoint is approved; `/healthz`, `/readyz`
+and `/api/tickets` return `200`; all live acceptance criteria pass; and evidence documents exist.
 
 ---
 
-## Step 4 — Compare (30 min)
+## Step 4 — Compare (20 min)
 
 Fill this in honestly and present it:
 
