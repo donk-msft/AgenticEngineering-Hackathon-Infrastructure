@@ -136,7 +136,8 @@ In VS Code, choose **Dev Containers: Reopen in Container**. The devcontainer ins
 Bicep and the Bicep extension; install and authenticate Copilot CLI separately if you take the
 intermediate track. Cloud Shell already provides Bash and Azure CLI.
 
-Then open the guide for your track and follow it. To validate any Bicep you (or your agents) write:
+Then choose your track, open its guide, and execute the hackathon steps for that track.
+After completing the track work, run validation:
 
 ```bash
 ./scripts/validate-infra.sh
