@@ -124,7 +124,7 @@ az account show --query "{name:name, id:id, tenantId:tenantId}" -o table
 
 ---
 
-## Quick Start
+## Quick Start Beginner and Intermediate Track
 
 ```bash
 git clone https://github.com/<your-account>/AgenticEngineering-Hackathon-Infrastructure.git
@@ -137,12 +137,6 @@ Bicep and the Bicep extension; install and authenticate Copilot CLI separately i
 intermediate track. Cloud Shell already provides Bash and Azure CLI.
 
 Then choose your track, open its guide, and execute the hackathon steps for that track.
-After completing the track work, run validation:
-
-```bash
-./scripts/validate-infra.sh
-dotnet build src/ContosoTicketing
-```
 
 Before any deployment, edit `infra/main.bicepparam`: choose a unique `workload` or `environment`
 token so your resource names cannot collide with another team, and replace the placeholder SQL
@@ -152,6 +146,8 @@ administrator values with a Microsoft Entra group or user from **your** tenant. 
 az ad group show --group "<your-sql-admin-group>" \
   --query "{objectId:id, login:displayName}" -o table
 ```
+----
+## Expert Track direct deployment
 
 To deploy the reference baseline directly (expert fast-start):
 
@@ -172,7 +168,15 @@ a suitable bootstrap host. The idempotent script creates the managed-identity us
 ```bash
 ./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
 ```
+----
+## Track Validation 
 
+After completing the track work, run validation:
+
+```bash
+./scripts/validate-infra.sh
+dotnet build src/ContosoTicketing
+```
 ---
 
 ## What's in This Repo
