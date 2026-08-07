@@ -39,7 +39,7 @@ jobs:
           REPOSITORY: ${{ github.repository }}
         run: |
           if [[ -z "$COPILOT_ASSIGN_PAT" ]]; then
-            echo "COPILOT_ASSIGN_PAT is required to assign Copilot. Configure a fine-grained token for a Copilot-licensed user with Issues: write access." >&2
+            echo "Copilot was not assigned because COPILOT_ASSIGN_PAT is not configured. Add a fine-grained token for a Copilot-licensed user with Issues: write access."
             exit 0
           fi
 
