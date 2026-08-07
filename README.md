@@ -154,9 +154,9 @@ are in [Execution Environments](docs/concepts/environment-options.md):
 
 Then choose your track, open its guide, and execute the hackathon steps for that track.
 
-Before any deployment, edit `infra/main.bicepparam`: choose a unique `workload` or `environment`
-token so your resource names cannot collide with another team, and replace the placeholder SQL
-administrator values with a Microsoft Entra group or user from **your** tenant. The supplied
+Before any deployment, edit `infra/main.bicepparam`: 
+- Choose a unique `workload` and `environment` token so your resource names cannot collide with another team
+- Replace the placeholder SQL administrator values with a Microsoft Entra group or user from **your** tenant. The supplied
 example uses the `sg-hackathon-sqladmins` group. Reuse that group if it already exists, or create
 it if your tenant permits group creation:
 
