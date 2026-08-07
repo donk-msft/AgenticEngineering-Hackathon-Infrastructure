@@ -1,10 +1,10 @@
 # Expert Lab 6 — Microsoft Defender for Cloud and Code-to-Cloud
 
-**Time**: 60 min · **Prerequisite**: Lab 5
+**Time**: 60 min · **Prerequisite**: [Lab 5 — GHAS on the IaC repo](lab-05-ghas.md)
 
-**Source**: [JoranBergfeld/ghas-defender-example](https://github.com/JoranBergfeld/ghas-defender-example)
-— reference `infra/modules/defender.bicep` (plan enablement), `infra/modules/githubConnector.bicep`
-(the Defender for Cloud GitHub connector) and `infra/modules/policy.bicep` (deny by policy).
+This lab is **self-contained**: the Defender plans, the GitHub connector and the deny policies are
+all things you author yourself in [`infra/`](../../infra/), following the module conventions already
+used by [`infra/main.bicep`](../../infra/main.bicep). No other repository needs to exist.
 
 ## Objective
 
@@ -27,9 +27,11 @@ flowchart LR
 
 ## 1. Enable Defender plans as code (20 min)
 
-Do **not** click this on. Add it to `infra/` so it is part of the desired state from Lab 2.
-Have your `@implementer` agent write `infra/modules/defender.bicep`, modelled on the reference repo,
-enabling at subscription scope at minimum:
+Do **not** click this on. Add it to [`infra/`](../../infra/) so it is part of the desired state from
+[Lab 2](lab-02-desired-state.md). Have your
+[`@implementer`](../../.github/agents/implementer.agent.md) agent write
+`infra/modules/defender.bicep` — a subscription-scoped module setting
+`Microsoft.Security/pricings` — enabling at minimum:
 
 - [ ] **Defender CSPM** — posture management and attack-path analysis
 - [ ] **Defender for App Service** — your compute tier
@@ -40,18 +42,31 @@ enabling at subscription scope at minimum:
 > 💡 Defender plans are billed per resource. Confirm the budget with your coaches, and note the
 > cleanup step at the end of this lab.
 
-Validate and deploy:
+Validate in **Bash with the Azure CLI**, from the **repository root** (dev container, local VS Code
+or Cloud Shell — see [Execution Environments](../concepts/environment-options.md)):
 
 ```bash
 ./scripts/validate-infra.sh
+```
+
+Then deploy at subscription scope:
+
+```bash
+az deployment sub create \
+  --name ticketing-baseline \
+  --location swedencentral \
+  --template-file infra/main.bicep \
+  --parameters infra/main.bicepparam
 ```
 
 ✅ **Checkpoint**: Defender for Cloud shows a secure score for your subscription.
 
 ## 2. Connect GitHub to Defender for Cloud (15 min)
 
-Deploy the **GitHub connector** (`githubConnector.bicep` in the reference repo), then complete the
-**one-time OAuth authorisation in the Azure portal** — the connector cannot finish without it.
+Author `infra/modules/githubConnector.bicep` (a `Microsoft.Security/securityConnectors` resource of
+kind `GitHub`) and deploy it with the same `az deployment sub create` command as above. Then
+complete the **one-time OAuth authorisation** in **Azure portal → Microsoft Defender for Cloud →
+Environment settings → your GitHub connector → Authorize** — the connector cannot finish without it.
 
 ✅ **Checkpoint**: **Defender for Cloud → DevOps security** lists your repository, and its GHAS
 findings appear as Azure security recommendations.
@@ -88,16 +103,15 @@ Remove the deliberate vulnerability afterwards.
 
 ## 5. Prevention, not just detection (5 min)
 
-Extend the Azure Policy work from Lab 2 with a Defender-driven deny. The reference repo denies
-vulnerable container images from being admitted to AKS; the Contoso Ticketing stack is PaaS, so the
-equivalent control point is resource admission rather than pod admission. Deploy at least one
-**deny** policy for your tier, for example:
+Extend the Azure Policy work from [Lab 2](lab-02-desired-state.md) with a Defender-driven deny. The
+Contoso Ticketing stack is PaaS, so the control point is **resource admission** — the deployment
+itself is refused. Deploy at least one **deny** policy for your tier, for example:
 
 - deny `Microsoft.Sql/servers` where `publicNetworkAccess` is not `Disabled`
 - deny `Microsoft.Sql/servers` without vulnerability assessment enabled
 - deny `Microsoft.Web/sites` where `httpsOnly` is false or `minTlsVersion` is below `1.2`
 
-Prove it the same way Lab 5 proved the CodeQL gate: attempt the non-compliant deployment from a
+Prove it the same way [Lab 5](lab-05-ghas.md) proved the CodeQL gate: attempt the non-compliant deployment from a
 branch and confirm the deployment is **denied**, not merely flagged. Then revert.
 
 ## 6. Cleanup
@@ -110,7 +124,7 @@ desired-state driven.
 
 ## Definition of Done
 
-- [ ] Defender plans enabled **as code** in `infra/`, including DevOps security
+- [ ] Defender plans enabled **as code** in [`infra/`](../../infra/), including DevOps security
 - [ ] GitHub connector deployed and authorised; your repository is listed under DevOps security
 - [ ] The posture questionnaire above is answered and any conflict with the desired-state contract is resolved
 - [ ] The SQL injection was traced end-to-end from the repository to the running App Service and SQL server, then fixed

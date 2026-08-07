@@ -20,8 +20,9 @@ flowchart LR
 
 ## 1. Write the desired-state contract (10 min)
 
-Create `docs/desired-state.md`. For each invariant, record: the property, its required value, how
-to verify it, and what happens if it drifts.
+Create `docs/desired-state.md` in your own repository — this repo ships a reference version at
+[`docs/desired-state.md`](../desired-state.md) you can compare against. For each invariant, record:
+the property, its required value, how to verify it, and what happens if it drifts.
 
 Start from the security requirements in the [workload spec](../concepts/workload.md#standards):
 
@@ -33,11 +34,13 @@ Start from the security requirements in the [workload spec](../concepts/workload
 | Deny-all NSG rule present | both NSGs | `az network nsg rule list` | Alert |
 | Required tags on every resource | 4 tags | `az resource list --query …` | Alert |
 
-Let an agent draft it from `infra/`, then edit it — you own the policy, not the agent.
+Let an agent draft it from [`infra/`](../../infra/), then edit it — you own the policy, not the agent.
 
 ## 2. Drift detection with what-if (15 min)
 
-`az deployment sub what-if` compares desired against actual. Run it now:
+`az deployment sub what-if` compares desired against actual. Run it in **Bash with the Azure CLI**,
+from the **repository root** (dev container, local VS Code or Cloud Shell — see
+[Execution Environments](../concepts/environment-options.md)):
 
 ```bash
 az deployment sub what-if \
@@ -48,10 +51,10 @@ az deployment sub what-if \
 ```
 
 Then **create real drift** in the Azure portal — for example set the web app's minimum TLS version
-to 1.0 — and run it again. The change must show up as a modification.
+to 1.0 — and run the same command again. The change must show up as a modification.
 
 Automate it: add a scheduled workflow that runs what-if daily and opens a GitHub issue when the
-result is non-empty. Reuse the OIDC identity from Lab 1 (it only needs `Reader`).
+result is non-empty. Reuse the OIDC identity from [Lab 1](lab-01-lifecycle.md) (it only needs `Reader`).
 
 ✅ **Checkpoint**: your manual portal change produced a GitHub issue.
 
@@ -64,15 +67,16 @@ dangerous changes cannot happen at all. At minimum:
 - **Deny** web apps without HTTPS only
 - **Audit** resources missing any required tag
 
-> The [ghas-defender-example](https://github.com/JoranBergfeld/ghas-defender-example) repo does the
-> same thing for container images in `infra/modules/policy.bicep` — deny-by-policy after a scanner
-> flags a risk. Same pattern, different resource type.
+Assign them either from **Azure portal → Policy → Assignments → Assign policy**, scoped to the
+workload resource group, or — preferred — as Bicep in your own `infra/modules/policy.bicep` so the
+assignment is itself desired state.
 
 Prove it: try to re-enable public network access on the SQL server. The request must be denied.
 
 ## 4. Reconcile (5 min)
 
-Revert the drift the honest way — redeploy from source:
+Revert the drift the honest way — redeploy from source. Run in **Bash with the Azure CLI**, from the
+**repository root**:
 
 ```bash
 az deployment sub create \
@@ -88,7 +92,7 @@ Re-run what-if. It must report no changes.
 
 ## Definition of Done
 
-- [ ] `docs/desired-state.md` lists every invariant with verification and drift response
+- [ ] Your `docs/desired-state.md` (compare with the [reference version](../desired-state.md)) lists every invariant with verification and drift response
 - [ ] A scheduled workflow detects drift and opens a GitHub issue
 - [ ] Azure Policy denies at least the two critical misconfigurations
 - [ ] A demonstrated drift → detect → reconcile → clean what-if cycle

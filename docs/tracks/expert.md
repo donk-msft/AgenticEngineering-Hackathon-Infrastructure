@@ -96,14 +96,17 @@ hands-on time; while waiting, complete the evidence and review tasks rather than
 
 ## Sources
 
-These labs are deliberately thin wrappers that point at the canonical material and adapt it to the Contoso Ticketing workload:
+Every lab is **self-contained** — each one can be completed using only this repository, the Azure
+portal and the Azure/GitHub CLIs. The material below is optional further reading, not a dependency;
+if any of it becomes unavailable, the labs still work.
 
-| Lab | Upstream source |
+| Topic | Optional further reading |
 |---|---|
-| 3, 4 | [JoranBergfeld/sre-agent-workshop](https://github.com/JoranBergfeld/sre-agent-workshop) — in particular the `cloud-agent-handover` scenario (App Service, low cost) |
-| 5, 6 | [JoranBergfeld/ghas-defender-example](https://github.com/JoranBergfeld/ghas-defender-example) |
+| Azure SRE Agent (Labs [3](../expert/lab-03-sre-agent.md), [4](../expert/lab-04-incident-handover.md)) | [Azure SRE Agent documentation](https://learn.microsoft.com/azure/sre-agent/overview) |
+| GHAS (Lab [5](../expert/lab-05-ghas.md)) | [GitHub Advanced Security documentation](https://docs.github.com/code-security) |
+| Defender for Cloud (Lab [6](../expert/lab-06-defender.md)) | [Microsoft Defender for Cloud DevOps security](https://learn.microsoft.com/azure/defender-for-cloud/defender-for-devops-introduction) |
 
-Use them as reference implementations, not as copy-paste targets — the point is to apply the pattern to **your** workload.
+Use them as reference material, not as copy-paste targets — the point is to apply the pattern to **your** workload.
 
 ---
 
