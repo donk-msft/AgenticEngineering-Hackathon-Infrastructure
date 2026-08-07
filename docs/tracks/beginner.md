@@ -20,7 +20,7 @@ flowchart LR
     I --> T["@tester"] --> D["@documenter"] --> Dep["@deployer"]
 ```
 
-| Step | Prompt | Agent | Produces |
+| Order | Prompt | Agent | Produces |
 |---|---|---|---|
 | 1 | `iac-1-architect` | `@architect` | `docs/architecture.md` |
 | 2 | `iac-2-review` | `@reviewer` | `docs/architecture-review.md` |
@@ -129,7 +129,30 @@ Split across the team — one agent each. Every agent must declare:
 
 ## Step 5 — Write the Prompts (20 min)
 
-One `.prompt.md` per step, numbered `iac-1-…` through `iac-7-…`. Each prompt states its **inputs** (files to read), its **task**, and its **expected output**. Editing a `.prompt.md` auto-loads [`prompt.instructions.md`](../../.github/instructions/prompt.instructions.md).
+One `.prompt.md` per step, numbered `iac-1-…` through `iac-7-…`. Together these seven prompt files
+are what drives the `@architect` → `@reviewer` → `@planner` → `@implementer` → `@tester` →
+`@documenter` → `@deployer` chain end to end against [`docs/concepts/workload.md`](../concepts/workload.md) — from
+first design to a live, verified deployment. Each prompt must state its **inputs** (the files it
+reads, including the handover artifact from the previous prompt), its **task**, and its **expected
+output** (the exact file(s) or action it produces), so that each one can be run in isolation and
+still slot into the pipeline:
+
+- `iac-1-architect` — **design**: read `docs/concepts/workload.md` and produce
+  `docs/architecture.md` (Mermaid diagram, CAF-named resource table, WAF trade-offs).
+- `iac-2-review` — **review**: read `docs/architecture.md` against the workload standards and
+  produce `docs/architecture-review.md` (issues found, and whether the design is approved to plan).
+- `iac-3-plan` — **plan**: read the approved architecture and review, and produce
+  `docs/development-plan.md` (an ordered, file-by-file implementation plan).
+- `iac-4-implement` — **implement**: read the development plan and produce the version-pinned
+  Azure Verified Modules Bicep under `infra/**/*.bicep`.
+- `iac-5-test` — **test**: read the implemented Bicep and the local validation results (see
+  Step 6 for the commands you run before this prompt), and produce `docs/test-results.md`.
+- `iac-6-document` — **document**: read the tested infrastructure and produce
+  `docs/deployment-guide.md` and `docs/operations-runbook.md`.
+- `iac-7-deploy` — **deploy**: read the deployment guide and deploy both the Bicep and
+  [`src/ContosoTicketing`](../../src/ContosoTicketing/) to live Azure resources.
+
+Editing a `.prompt.md` auto-loads [`prompt.instructions.md`](../../.github/instructions/prompt.instructions.md).
 
 ✅ **Checkpoint**: a teammate who has never seen your workflow can run `/iac-3-plan` and get a sensible result.
 
@@ -137,16 +160,22 @@ One `.prompt.md` per step, numbered `iac-1-…` through `iac-7-…`. Each prompt
 
 ## Step 6 — Run the Pipeline (60 min)
 
+The "pipeline" is the seven `iac-*` prompt files you wrote in Step 5, run in order. Together they
+chain your seven agents end to end, each one handing its output to the next through the skills and
+handover artifacts you built in Steps 2–4 — this is what actually links "design" through "deploy"
+into a single, repeatable run.
+
 Run `/iac-1-architect` … `/iac-7-deploy` in order. **After every step, read the output before continuing.** That review moment is the handover.
 
-Between steps 4 and 5, validate locally:
+**Between the `/iac-4-implement` and `/iac-5-test` prompt steps** — i.e. after `@implementer` has
+written the Bicep and before `@tester` runs — validate locally:
 
 ```bash
 ./scripts/validate-infra.sh
 dotnet build src/ContosoTicketing
 ```
 
-Step 7 deploys both layers — the Bicep, then the application. Run these Bash commands from any
+Step 7 (`/iac-7-deploy`) deploys both layers — the Bicep, then the application. Run these Bash commands from any
 supported environment (dev container, Codespaces, local VS Code or Cloud Shell):
 
 ```bash
