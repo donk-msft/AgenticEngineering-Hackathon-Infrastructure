@@ -1,11 +1,11 @@
 # Expert Lab 4 — Incident → Agent Handover
 
-**Time**: 75 min · **Prerequisite**: Lab 3
+**Time**: 75 min · **Prerequisite**: [Lab 3 — Onboard the Azure SRE Agent](lab-03-sre-agent.md)
 
-**Source**: the `cloud-agent-handover` scenario in
-[JoranBergfeld/sre-agent-workshop](https://github.com/JoranBergfeld/sre-agent-workshop/tree/main/scenarios/cloud-agent-handover)
-— App Service based, low cost, and the closest match to the Contoso Ticketing workload. Read its
-`README.md` and `docs/90-watch-sre-agent.md` first.
+This lab is **self-contained**: the fault, the checks and the handover are all defined inside this
+repository. The scenario is the classic *cloud agent handover* pattern — an App Service based
+workload where a runtime failure is investigated by an operations agent and, when the fix belongs
+in code, handed to a coding agent as a structured issue.
 
 ## Objective
 
@@ -39,7 +39,10 @@ sequenceDiagram
 The fault is defined once, for all tracks, in
 [`docs/concepts/fault-and-vulnerability.md`](../concepts/fault-and-vulnerability.md). Read it now.
 
-First confirm the **working** state — this is the SRE check that must pass before you break it:
+First confirm the **working** state — this is the SRE check that must pass before you break it. Run
+in **Bash** (any shell with `curl`; dev container, local VS Code or Cloud Shell — see
+[Execution Environments](../concepts/environment-options.md)), replacing `<webapp>` with your web
+app name:
 
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/readyz   # expect 200
@@ -47,10 +50,11 @@ curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/api/
 ```
 
 If readiness has never returned `200`, do not inject a fault. Complete the private SQL bootstrap in
-[`docs/operations-runbook.md`](../operations-runbook.md) using the original subscription deployment
-name. The App Service managed identity cannot create its own SQL principal; the configured Entra
-SQL administrator must establish that initial data-plane authorization from a private-network
-connected host.
+[`docs/operations-runbook.md`](../operations-runbook.md), running
+[`./scripts/bootstrap-ticketing-database.sh`](../../scripts/bootstrap-ticketing-database.sh) from
+the **repository root** on a VNet-connected host, using the original subscription deployment name.
+The App Service managed identity cannot create its own SQL principal; the configured Entra SQL
+administrator must establish that initial data-plane authorization.
 
 Then inject exactly one of injections **A**, **B** or **C** from that document — a dropped database
 role membership, a deleted private DNS virtual network link, or a removed NSG rule. All three make
@@ -63,7 +67,16 @@ telemetry.
 
 ## 2. Trigger and observe (20 min)
 
-Drive traffic to the broken route until the alert fires, then **watch without helping**. Record:
+Drive traffic to the broken route until the alert fires — from **Bash**, replacing `<webapp>`:
+
+```bash
+for i in $(seq 1 60); do
+  curl -s -o /dev/null https://<webapp>.azurewebsites.net/api/tickets
+  sleep 5
+done
+```
+
+Then **watch without helping**, in the SRE Agent's chat/incident view in the Azure portal. Record:
 
 | Question | Your observation |
 |---|---|
@@ -88,26 +101,38 @@ just a ticket.**
 
 ## 4. Copilot fixes it (15 min)
 
-Assign the issue to GitHub Copilot. It should open a pull request. Review it as an engineer:
+Assign the issue to GitHub Copilot (**GitHub → Issues → the issue → Assignees → Copilot**). It
+should open a pull request. Review it as an engineer:
 
 - [ ] Does it fix the root cause or only the symptom?
 - [ ] Does it also fix the **template**, so the fault cannot recur on redeploy?
-- [ ] Does `infra-ci` (Lab 1) pass on the PR?
+- [ ] Does [`infra-ci`](../../.github/workflows/infra-ci.yml) ([Lab 1](lab-01-lifecycle.md)) pass on the PR?
 
 Merge it and let CI deploy through the OIDC pipeline.
 
 ## 5. Verify and close (5 min)
 
+Run the two `curl` checks from step 1 again, and the drift check from the **repository root** in
+**Bash with the Azure CLI**:
+
+```bash
+az deployment sub what-if \
+  --name ticketing-drift \
+  --location swedencentral \
+  --template-file infra/main.bicep \
+  --parameters infra/main.bicepparam
+```
+
 - [ ] `GET /readyz` returns `200` and `GET /api/tickets` returns `200` again
 - [ ] The alert has resolved
 - [ ] `az deployment sub what-if` reports no drift
-- [ ] The incident, investigation and fix are captured in `docs/operations-runbook.md`
+- [ ] The incident, investigation and fix are captured in [`docs/operations-runbook.md`](../operations-runbook.md)
 
 ## 6. Reflect
 
 1. Where did the SRE Agent's conclusion differ from what you actually broke?
 2. What did the handover issue lack that a human would have included?
-3. Which knowledge file from Lab 3 would have made the investigation faster?
+3. Which knowledge file from [Lab 3](lab-03-sre-agent.md) would have made the investigation faster?
 4. Which parts of this loop would you let run without an approval gate — and which never?
 
 ---

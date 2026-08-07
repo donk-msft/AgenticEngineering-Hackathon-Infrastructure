@@ -67,19 +67,6 @@ See [`docs/concepts/workload.md`](docs/concepts/workload.md) for the full specif
 
 ---
 
-## Choose Your Track
-
-| | 🟢 Beginner | 🟡 Intermediate | 🔴 Expert |
-|---|---|---|---|
-| **Duration** | ~3 h 45 min | ~3 h 45 min | ~4 h as a team; ~6 h solo |
-| **Prereq** | Copilot basics | Beginner track or equivalent | A deployed baseline |
-| **Focus** | Build the agentic pipeline by hand | Compress it with modern Copilot | Day-2 reliability + security |
-| **Guide** | [docs/tracks/beginner.md](docs/tracks/beginner.md) | [docs/tracks/intermediate.md](docs/tracks/intermediate.md) | [docs/tracks/expert.md](docs/tracks/expert.md) |
-
-Not sure? Start at [docs/tracks/README.md](docs/tracks/README.md).
-
----
-
 ## Indicative cost for one day
 
 These are **planning ranges**, not a quote: prices vary by region, agreement, usage and telemetry
@@ -173,31 +160,24 @@ az ad group show --group "sg-hackathon-sqladmins" \
   --query "{objectId:id, login:displayName}" -o table
 ```
 
-----
-## Expert Track direct deployment
+---
 
-To deploy the reference baseline directly (expert fast-start):
+## Choose Your Track
 
-```bash
-az deployment sub create \
-  --name ticketing-baseline \
-  --location swedencentral \
-  --template-file infra/main.bicep \
-  --parameters infra/main.bicepparam
-```
+| | 🟢 Beginner | 🟡 Intermediate | 🔴 Expert |
+|---|---|---|---|
+| **Duration** | ~3 h 45 min | ~3 h 45 min | ~4 h as a team; ~6 h solo |
+| **Prereq** | Copilot basics | Beginner track or equivalent | A deployed baseline |
+| **Focus** | Build the agentic pipeline by hand | Compress it with modern Copilot | Day-2 reliability + security |
+| **Guide** | [docs/tracks/beginner.md](docs/tracks/beginner.md) | [docs/tracks/intermediate.md](docs/tracks/intermediate.md) | [docs/tracks/expert.md](docs/tracks/expert.md) |
 
-Run the deployment and application publish from Cloud Shell, a dev container, Codespaces, or local
-VS Code — see [Execution Environments](docs/concepts/environment-options.md). Run the following
-**only** as the configured Microsoft Entra SQL administrator on a host connected to the workload
-VNet. Standard Cloud Shell (and a devcontainer/Codespace by default) normally cannot resolve the
-private endpoint and is not a suitable bootstrap host. The idempotent script creates the
-managed-identity user, its `db_datareader` grant and `dbo.Tickets` without enabling public SQL
-access:
+Not sure? Start at [docs/tracks/README.md](docs/tracks/README.md).
 
-```bash
-./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
-```
-----
+Starting fresh at expert? The one-command baseline deployment, the application publish and the SQL
+bootstrap are documented in [docs/tracks/expert.md](docs/tracks/expert.md#start-here).
+
+---
+
 ## Track Validation 
 
 After completing the track work, run validation:

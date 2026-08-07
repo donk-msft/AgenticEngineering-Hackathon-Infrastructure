@@ -1,6 +1,8 @@
 # Expert Lab 7 — Close the Loop
 
-**Time**: 45 min · **Prerequisite**: Labs 1–6
+**Time**: 45 min · **Prerequisite**: Labs [1](lab-01-lifecycle.md), [2](lab-02-desired-state.md),
+[3](lab-03-sre-agent.md), [4](lab-04-incident-handover.md), [5](lab-05-ghas.md) and
+[6](lab-06-defender.md)
 
 You now have a pipeline that builds the workload and two systems that watch it. This lab connects
 them, so operational and security signals become **agent work items** rather than a dashboard
@@ -27,15 +29,16 @@ flowchart LR
 
 ## 1. Map every signal (15 min)
 
-Create `docs/feedback-loops.md` and fill in this table for your implementation:
+Create `docs/feedback-loops.md` in **your own repository** and fill in this table for your
+implementation:
 
 | Signal source | Trigger | Lands as | Handled by | Human gate |
 |---|---|---|---|---|
 | Azure SRE Agent | Alert → investigation | Structured GitHub issue | Copilot coding agent | Approve handover |
-| Drift check (Lab 2) | Scheduled what-if diff | GitHub issue | `@implementer` agent | PR review |
-| CodeQL (Lab 5) | High/Critical finding | Failed check + alert | Copilot autofix / `@implementer` | PR review |
+| Drift check ([Lab 2](lab-02-desired-state.md)) | Scheduled what-if diff | GitHub issue | [`@implementer`](../../.github/agents/implementer.agent.md) agent | PR review |
+| CodeQL ([Lab 5](lab-05-ghas.md)) | High/Critical finding | Failed check + alert | Copilot autofix / [`@implementer`](../../.github/agents/implementer.agent.md) | PR review |
 | Secret scanning | Push protection block | Blocked push | Developer | Immediate |
-| Defender for Cloud (Lab 6) | New recommendation | | | |
+| Defender for Cloud ([Lab 6](lab-06-defender.md)) | New recommendation | | | |
 | Dependabot | Vulnerable dependency | PR | Automated | PR review |
 
 Any row where the "handled by" column says *nobody* is a gap. Fix it or write down why it is acceptable.
@@ -46,19 +49,22 @@ Your day-1 agents were built for greenfield. Day-2 needs one more: an agent that
 (incident, drift, or security recommendation), determines whether the fix belongs in the template,
 the application or the runtime, and routes it accordingly.
 
-Create `.github/agents/sre.agent.md` — see the reference version in
-[`.github/agents/`](../../.github/agents/) if you get stuck. It should:
+Create `.github/agents/sre.agent.md` in your own repository — see the reference version at
+[`.github/agents/sre.agent.md`](../../.github/agents/sre.agent.md) if you get stuck. It should:
 
-- read `docs/desired-state.md`, `docs/operations-runbook.md` and `knowledge/`
+- read [`docs/desired-state.md`](../desired-state.md),
+  [`docs/operations-runbook.md`](../operations-runbook.md) and your `knowledge/` directory
 - classify the finding
-- hand off to `@implementer` for template fixes, and always insist the **template** is fixed, not just the live resource
+- hand off to [`@implementer`](../../.github/agents/implementer.agent.md) for template fixes, and
+  always insist the **template** is fixed, not just the live resource
 - refuse to fix a symptom without recording the root cause
 
-Prove it on a real finding from Lab 4 or Lab 6.
+Prove it on a real finding from [Lab 4](lab-04-incident-handover.md) or
+[Lab 6](lab-06-defender.md).
 
 ## 3. Decide where the humans stand (10 min)
 
-Agree as a team, and record in `docs/feedback-loops.md`:
+Agree as a team, and record in your `docs/feedback-loops.md`:
 
 | Action | Autonomous | Approval required | Never automated |
 |---|---|---|---|
