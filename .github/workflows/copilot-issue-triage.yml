@@ -18,7 +18,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           REPOSITORY: ${{ github.repository }}
         run: |
-          if ! gh label list --repo "$REPOSITORY" --limit 100 --json name --jq '.[].name' | grep -Fxq 'copilot-ready'; then
+          if ! gh label list --repo "$REPOSITORY" --search copilot-ready --limit 100 --json name --jq '.[].name' | grep -Fxq 'copilot-ready'; then
             gh label create copilot-ready --repo "$REPOSITORY" --color 1D76DB --description "Queued for Copilot triage"
           fi
 
@@ -40,7 +40,7 @@ jobs:
         run: |
           if [[ -z "$COPILOT_ASSIGN_PAT" ]]; then
             echo "COPILOT_ASSIGN_PAT is required to assign Copilot. Configure a fine-grained token for a Copilot-licensed user with Issues: write access." >&2
-            exit 1
+            exit 0
           fi
 
           GH_TOKEN="$COPILOT_ASSIGN_PAT" gh issue edit "$ISSUE_NUMBER" --repo "$REPOSITORY" --add-assignee "@copilot"
