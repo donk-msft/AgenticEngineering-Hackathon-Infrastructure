@@ -47,3 +47,12 @@ workload at three levels of agentic maturity.
 - Prompts: `.github/prompts/<workflow>-<step>-<verb>.prompt.md` — numbered, with inputs, task and
   expected output.
 - These are **reference examples**. Participants are expected to write their own.
+
+## Issue triage
+
+- When assigned to an issue, triage it before changing code. Only security issues and reproducible
+  bug reports may be implemented autonomously.
+- Functional requests, unclear reports, duplicates, and reports without sufficient evidence require
+  a concise triage comment for `@bram-boer`; do not create a branch or pull request for them.
+- For eligible work, use a dedicated branch, validate the smallest safe fix, and open a pull request
+  for `@bram-boer` to review. Never merge that pull request.
