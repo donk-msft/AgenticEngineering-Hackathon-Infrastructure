@@ -172,6 +172,7 @@ Then retrieve the group's values and copy them into `sqlAdminObjectId` and `sqlA
 az ad group show --group "sg-hackathon-sqladmins" \
   --query "{objectId:id, login:displayName}" -o table
 ```
+
 ----
 ## Expert Track direct deployment
 
