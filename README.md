@@ -108,8 +108,11 @@ after the exercise, delete the resource group and disable any Defender plans cre
 - Beginner/intermediate: a scope where your team can create the baseline resources. Expert: also
   `User Access Administrator`, permission to enable Defender plans, and repository-admin access.
 - **GitHub Copilot** licence. Expert additionally needs an Enterprise/GHAS-enabled repository.
-- **Azure Cloud Shell** or VS Code/Codespaces reopened in the dev container. The examples use Bash;
-  native Windows users should use the dev container or Cloud Shell.
+- A place to run these steps: **Codespaces/local VS Code with the dev container**, **local VS Code
+  without the dev container**, or **Azure Cloud Shell** all work — see
+  [Execution Environments](docs/concepts/environment-options.md) for what each option gives you and
+  where each step in the tracks should run. The examples use Bash; native Windows users should use
+  the dev container or Cloud Shell.
 - **Azure CLI** with Bicep (`az bicep install`)
 - Deploy in a region where the **Azure SRE Agent** is available if you intend to do the expert track: `swedencentral`, `eastus2` or `australiaeast`
 
@@ -126,15 +129,28 @@ az account show --query "{name:name, id:id, tenantId:tenantId}" -o table
 
 ## Quick Start Beginner and Intermediate Track
 
-```bash
-git clone https://github.com/<your-account>/AgenticEngineering-Hackathon-Infrastructure.git
-cd AgenticEngineering-Hackathon-Infrastructure
-code .
-```
+Choose the option that fits your team — full details and a step-by-step "where to run what" table
+are in [Execution Environments](docs/concepts/environment-options.md):
 
-In VS Code, choose **Dev Containers: Reopen in Container**. The devcontainer installs Azure CLI,
-Bicep and the Bicep extension; install and authenticate Copilot CLI separately if you take the
-intermediate track. Cloud Shell already provides Bash and Azure CLI.
+- **Codespaces or local VS Code with the dev container** (recommended — gets you agents, prompts,
+  Copilot Chat and pre-installed tooling in one step):
+
+  ```bash
+  git clone https://github.com/<your-account>/AgenticEngineering-Hackathon-Infrastructure.git
+  cd AgenticEngineering-Hackathon-Infrastructure
+  code .
+  ```
+
+  In VS Code, choose **Dev Containers: Reopen in Container** (or open the clone directly in a
+  Codespace). The devcontainer installs Azure CLI, Bicep and the Bicep extension; install and
+  authenticate Copilot CLI separately if you take the intermediate track.
+
+- **Local VS Code without the dev container**: clone and open the repo as above but skip "Reopen in
+  Container". You are responsible for installing Azure CLI, Bicep and the .NET SDK yourself.
+
+- **Azure Cloud Shell**: open [shell.azure.com](https://shell.azure.com) or the Cloud Shell icon in
+  the Azure Portal. Bash, Azure CLI and Bicep are already installed, but there is no Copilot Chat —
+  use it for running `az`/Bicep/`dotnet` commands after writing your agents and prompts elsewhere.
 
 Then choose your track, open its guide, and execute the hackathon steps for that track.
 
@@ -159,11 +175,13 @@ az deployment sub create \
   --parameters infra/main.bicepparam
 ```
 
-Run the deployment and application publish from Cloud Shell, Copilot CLI or the VS Code terminal.
-Run the following **only** as the configured Microsoft Entra SQL administrator on a host connected
-to the workload VNet. Standard Cloud Shell normally cannot resolve the private endpoint and is not
-a suitable bootstrap host. The idempotent script creates the managed-identity user, its
-`db_datareader` grant and `dbo.Tickets` without enabling public SQL access:
+Run the deployment and application publish from Cloud Shell, a dev container, Codespaces, or local
+VS Code — see [Execution Environments](docs/concepts/environment-options.md). Run the following
+**only** as the configured Microsoft Entra SQL administrator on a host connected to the workload
+VNet. Standard Cloud Shell (and a devcontainer/Codespace by default) normally cannot resolve the
+private endpoint and is not a suitable bootstrap host. The idempotent script creates the
+managed-identity user, its `db_datareader` grant and `dbo.Tickets` without enabling public SQL
+access:
 
 ```bash
 ./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
@@ -196,7 +214,7 @@ dotnet build src/ContosoTicketing
 ├── .vscode/mcp.json                     # Azure, Learn and GitHub MCP servers
 ├── docs/
 │   ├── tracks/{beginner,intermediate,expert}.md
-│   ├── concepts/                        # Workload spec, agent anatomy, handovers, fault & vulnerability contract
+│   ├── concepts/                        # Workload spec, agent anatomy, handovers, fault & vulnerability contract, execution environments
 │   └── expert/                          # SRE Agent + GHAS/Defender labs
 ├── infra/                               # 📦 The shared Contoso Ticketing baseline
 │   ├── main.bicep · main.bicepparam
