@@ -3,6 +3,11 @@ mode: agent
 description: Implement the approved architecture as validated Bicep.
 ---
 
+# Purpose
+
+This prompt is active training material that can be run from `.github/prompts/` during the hackathon.
+Participant-safe prompt examples live under `docs/tracks/examples/`.
+
 # Inputs
 
 - `docs/architecture.md` — the approved design.

@@ -3,6 +3,11 @@ mode: agent
 description: Design the Contoso Ticketing Azure architecture.
 ---
 
+# Purpose
+
+This prompt is active training material that can be run from `.github/prompts/` during the hackathon.
+Participant-safe prompt examples live under `docs/tracks/examples/`.
+
 # Inputs
 
 - `docs/concepts/workload.md` — the requirement document.

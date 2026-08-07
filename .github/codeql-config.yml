@@ -1,3 +1,6 @@
+# Purpose: active repository automation. This CodeQL configuration supports the app-ci workflow;
+# participant-safe security examples live under docs/tracks/examples/.
+
 name: Contoso Ticketing CodeQL configuration
 
 queries:

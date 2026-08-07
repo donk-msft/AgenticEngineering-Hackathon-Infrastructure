@@ -1,3 +1,6 @@
+# Purpose: active repository automation. This workflow builds and scans the Contoso Ticketing app for
+# the hackathon; participant-safe workflow patterns and agentic examples live under docs/tracks/examples/.
+
 name: app-ci
 
 on:
