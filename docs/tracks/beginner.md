@@ -145,8 +145,8 @@ still slot into the pipeline:
   `docs/development-plan.md` (an ordered, file-by-file implementation plan).
 - `iac-4-implement` — **implement**: read the development plan and produce the version-pinned
   Azure Verified Modules Bicep under `infra/**/*.bicep`.
-- `iac-5-test` — **test**: read the implemented Bicep, run `./scripts/validate-infra.sh` and
-  `dotnet build src/ContosoTicketing`, and produce `docs/test-results.md`.
+- `iac-5-test` — **test**: read the implemented Bicep and the local validation results (see
+  Step 6 for the commands you run before this prompt), and produce `docs/test-results.md`.
 - `iac-6-document` — **document**: read the tested infrastructure and produce
   `docs/deployment-guide.md` and `docs/operations-runbook.md`.
 - `iac-7-deploy` — **deploy**: read the deployment guide and deploy both the Bicep and
