@@ -10,6 +10,9 @@
 
 **Rolling up from beginner or intermediate?** Complete the [roll-up checklist](../concepts/rollup-checklist.md) — it verifies your deployment exposes what the labs below assume — then go to Lab 1.
 
+> Run the commands below from a devcontainer/Codespace, local VS Code or Azure Cloud Shell — see
+> [Execution Environments](../concepts/environment-options.md) for what each option gives you.
+
 **Starting fresh at expert?** Deploy the reference baseline in one command and go to Lab 1:
 
 ```bash
@@ -36,7 +39,9 @@ Microsoft Entra SQL administrator:
 ./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
 ```
 
-Ordinary Cloud Shell cannot normally reach the SQL private endpoint. The starting state is ready
+Ordinary Cloud Shell, and a devcontainer/Codespace by default, cannot normally reach the SQL
+private endpoint — see [Execution Environments](../concepts/environment-options.md). The starting
+state is ready
 only when `/healthz`, `/readyz` and `/api/tickets` return `200`, Application Insights receives
 telemetry, and the SQL server remains private. Use the [roll-up checklist](../concepts/rollup-checklist.md)
 to record the resource names and prove this same state before starting either lane.

@@ -37,9 +37,11 @@ flowchart LR
 
 ## Step 0 — Set Up (20 min)
 
-1. Fork and clone the repository, then open it in Codespaces or VS Code and run **Dev Containers:
-   Reopen in Container**. In `infra/main.bicepparam`, choose a unique workload/environment token
-   and replace the sample SQL administrator object ID and login with values from your tenant.
+1. Fork and clone the repository, then choose how you'll run the steps below — Codespaces or local
+   VS Code with **Dev Containers: Reopen in Container**, local VS Code without the dev container, or
+   Azure Cloud Shell. See [Execution Environments](../concepts/environment-options.md) for what each
+   gives you. In `infra/main.bicepparam`, choose a unique workload/environment token and replace the
+   sample SQL administrator object ID and login with values from your tenant.
 2. Run `az login` and confirm the subscription with your coach. Your team must deploy to its own
    subscription.
 3. Install and authenticate the **Copilot CLI**; `/fleet` runs in its interactive terminal:
@@ -47,8 +49,9 @@ flowchart LR
    npm install -g @github/copilot
    copilot
    ```
-4. Use VS Code Copilot Chat for **Plan** mode (`/plan`). Enable the `azure`, `microsoft-docs`, and
-   `github` MCP servers from `.vscode/mcp.json`, restart Chat, and confirm their tools are listed.
+4. Use VS Code Copilot Chat for **Plan** mode (`/plan`) — this needs VS Code or Codespaces, not
+   Cloud Shell. Enable the `azure`, `microsoft-docs`, and `github` MCP servers from
+   `.vscode/mcp.json`, restart Chat, and confirm their tools are listed.
    If your Copilot plan or CLI version does not expose `/fleet`, use the supplied orchestrator
    example to run the same work with parallel custom agents; do not skip the review gates.
 5. Read [`docs/concepts/workload.md`](../concepts/workload.md) — again, it is your requirement document.
@@ -117,10 +120,12 @@ acceptance criterion in docs/concepts/workload.md against the live resources and
 docs/test-results.md and docs/operations-runbook.md.
 ```
 
-Publish the application with the Bash commands in [the track entry guide](README.md), then run
+Publish the application with the Bash commands in [the track entry guide](README.md) — from any
+supported environment — then run
 `./scripts/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured
-Entra SQL administrator from a host connected to the workload VNet. Cloud Shell is normally not
-such a host; never make SQL public to bypass this.
+Entra SQL administrator from a host connected to the workload VNet. Cloud Shell, a devcontainer or
+a Codespace are normally not such a host — see
+[Execution Environments](../concepts/environment-options.md); never make SQL public to bypass this.
 
 ✅ **Checkpoint**: deployment `Succeeded`; the private endpoint is approved; `/healthz`, `/readyz`
 and `/api/tickets` return `200`; all live acceptance criteria pass; and evidence documents exist.

@@ -30,9 +30,11 @@ Work in a fork owned by your team and deploy to your own subscription. Before cr
 2. Replace the sample SQL administrator object ID and login with a Microsoft Entra group or user in
    your tenant. The group/user must be able to sign in to Azure SQL for the one-time bootstrap.
 3. Confirm the signed-in subscription is yours: `az account show -o table`.
-4. Decide where each action runs:
+4. Decide where each action runs. All three supported options — dev container/Codespaces, local
+   VS Code, and Azure Cloud Shell — are detailed in
+   [Execution Environments](../concepts/environment-options.md):
 
-| Action | Cloud Shell, Copilot CLI or VS Code terminal | Private-network-connected host |
+| Action | Dev container/Codespaces, local VS Code, Cloud Shell or Copilot CLI | Private-network-connected host |
 |---|---|---|
 | Validate, what-if, deploy Bicep and publish the app | ✅ | ✅ |
 | Run `bootstrap-ticketing-database.sh` | Usually no | ✅ Required |

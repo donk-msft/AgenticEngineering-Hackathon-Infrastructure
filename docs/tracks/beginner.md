@@ -42,9 +42,11 @@ Reference versions of all of these live in [`.github/agents/`](../../.github/age
 
 ## Step 0 — Set Up (15 min)
 
-1. Fork the repository, clone **your fork**, and open it in Codespaces or VS Code. In VS Code, run
-   **Dev Containers: Reopen in Container**; Azure CLI, Bicep and the Bicep extension are installed
-   there. Azure Cloud Shell is also supported for Bash deployment commands.
+1. Fork the repository, clone **your fork**, and choose how you'll run the steps below — a
+   Codespace or local VS Code with the dev container (Azure CLI, Bicep and the Bicep extension are
+   installed there), local VS Code without the dev container, or Azure Cloud Shell for Bash
+   deployment commands. See [Execution Environments](../concepts/environment-options.md) for what
+   each option gives you and where each step in this guide should run.
 2. In `infra/main.bicepparam`, choose a unique `workload` or `environment` token and replace the
    placeholder SQL administrator object ID and login with an Entra group or user in your tenant.
    This avoids resource-name collisions and makes the later database bootstrap possible.
@@ -53,9 +55,10 @@ Reference versions of all of these live in [`.github/agents/`](../../.github/age
    az login
    az account show --query "{name:name, id:id, tenantId:tenantId}" -o table
    ```
-4. In VS Code, enable the `azure`, `microsoft-docs`, and `github` MCP servers from
-   `.vscode/mcp.json`, then restart Copilot Chat and confirm their tools are listed. This needs
-   outbound npm access.
+4. In VS Code (dev container, Codespace or local), enable the `azure`, `microsoft-docs`, and
+   `github` MCP servers from `.vscode/mcp.json`, then restart Copilot Chat and confirm their tools
+   are listed. This needs outbound npm access. Cloud Shell has no Copilot Chat, so agents, prompts
+   and MCP servers must be run from VS Code or Codespaces.
 5. Read [`docs/concepts/workload.md`](../concepts/workload.md) as a team. **This is your requirement document.**
 
 > ℹ️ Because a fresh workspace has no `infra/` of your own, work in a branch. The reference `infra/` in this repo is your safety net — you may compare against it at any time, but write your own first.
@@ -143,8 +146,8 @@ Between steps 4 and 5, validate locally:
 dotnet build src/ContosoTicketing
 ```
 
-Step 7 deploys both layers — the Bicep, then the application. Run these Bash commands from Cloud
-Shell or the dev container:
+Step 7 deploys both layers — the Bicep, then the application. Run these Bash commands from any
+supported environment (dev container, Codespaces, local VS Code or Cloud Shell):
 
 ```bash
 dotnet publish src/ContosoTicketing -c Release -o /tmp/publish
@@ -154,8 +157,9 @@ az webapp deploy --resource-group <rg> --name <webapp> --src-path /tmp/app.zip -
 
 After publishing, switch to a host connected to the workload VNet and run
 `./scripts/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured
-Entra SQL administrator. Do not run this from ordinary Cloud Shell: it cannot normally resolve the
-SQL private endpoint.
+Entra SQL administrator. Do not run this from ordinary Cloud Shell, a devcontainer or a Codespace:
+none of them can normally resolve the SQL private endpoint — see
+[Execution Environments](../concepts/environment-options.md).
 
 ✅ **Checkpoint**: the deployment succeeds, `az deployment sub show` reports `Succeeded`, and
 `/healthz`, `/readyz` and `/api/tickets` all return `200`. This proves the app uses managed identity
