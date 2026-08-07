@@ -156,10 +156,20 @@ Then choose your track, open its guide, and execute the hackathon steps for that
 
 Before any deployment, edit `infra/main.bicepparam`: choose a unique `workload` or `environment`
 token so your resource names cannot collide with another team, and replace the placeholder SQL
-administrator values with a Microsoft Entra group or user from **your** tenant. For a group:
+administrator values with a Microsoft Entra group or user from **your** tenant. The supplied
+example uses the `sg-hackathon-sqladmins` group. Reuse that group if it already exists, or create
+it if your tenant permits group creation:
 
 ```bash
-az ad group show --group "<your-sql-admin-group>" \
+az ad group create \
+  --display-name "sg-hackathon-sqladmins" \
+  --mail-nickname "sg-hackathon-sqladmins"
+```
+
+Then retrieve the group's values and copy them into `sqlAdminObjectId` and `sqlAdminLogin`:
+
+```bash
+az ad group show --group "sg-hackathon-sqladmins" \
   --query "{objectId:id, login:displayName}" -o table
 ```
 ----
