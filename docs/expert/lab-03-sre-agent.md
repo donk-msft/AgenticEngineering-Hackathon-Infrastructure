@@ -51,11 +51,13 @@ If the resource group is not in a supported region, redeploy from source into on
 You also need, on the subscription:
 
 - **Owner** or **User Access Administrator** — the agent's managed identity needs role assignments.
-- The `Microsoft.SecurityCopilot` and `Microsoft.App` resource providers registered:
+- The resource providers listed as prerequisites in
+  [Create an Azure SRE Agent](https://learn.microsoft.com/azure/sre-agent/create-agent) registered.
+  The portal offers to register any that are missing; to check or register one yourself:
 
 ```bash
-az provider register --namespace Microsoft.SecurityCopilot
-az provider register --namespace Microsoft.App
+az provider show --namespace <provider-namespace> --query registrationState -o tsv
+az provider register --namespace <provider-namespace>
 ```
 
 If your network is restricted, allow outbound access to `*.azuresre.ai`.
