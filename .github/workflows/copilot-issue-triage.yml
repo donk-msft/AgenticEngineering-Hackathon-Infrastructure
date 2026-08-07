@@ -1,0 +1,46 @@
+name: Copilot issue triage
+
+on:
+  issues:
+    types:
+      - opened
+
+permissions:
+  issues: write
+
+jobs:
+  triage:
+    name: Label and assign Copilot
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ensure the Copilot-ready label exists
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if ! gh label list --repo "$REPOSITORY" --search copilot-ready --limit 100 --json name --jq '.[].name' | grep -Fxq 'copilot-ready'; then
+            gh label create copilot-ready --repo "$REPOSITORY" --color 1D76DB --description "Queued for Copilot triage"
+          fi
+
+      - name: Label the issue and provide triage instructions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" --repo "$REPOSITORY" --add-label copilot-ready
+          gh issue comment "$ISSUE_NUMBER" --repo "$REPOSITORY" --body \
+            "Copilot: triage this issue before making changes. Only prepare a fix for a reproducible bug or a security issue. For a functional request, unclear report, duplicate, or issue without enough evidence, leave a concise triage comment for @bram-boer and do not create a branch or pull request. For eligible work, create a dedicated branch, implement and validate the smallest safe fix, then open a pull request for @bram-boer to review. Do not merge the pull request."
+
+      - name: Assign Copilot
+        env:
+          COPILOT_ASSIGN_PAT: ${{ secrets.COPILOT_ASSIGN_PAT }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          if [[ -z "$COPILOT_ASSIGN_PAT" ]]; then
+            echo "Copilot was not assigned because COPILOT_ASSIGN_PAT is not configured. Add a fine-grained token for a Copilot-licensed user with Issues: write access."
+            exit 0
+          fi
+
+          GH_TOKEN="$COPILOT_ASSIGN_PAT" gh issue edit "$ISSUE_NUMBER" --repo "$REPOSITORY" --add-assignee "@copilot"
