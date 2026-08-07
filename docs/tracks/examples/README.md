@@ -6,7 +6,8 @@ Use them as reference patterns, not as files to copy over your own work. They de
 
 Some files also exist under `.github/` because GitHub, Copilot and GitHub Actions only discover
 instructions, prompts and workflows from there. Treat those `.github/` files as active automation or
-training material; this folder is the participant-safe place to browse examples.
+training material, not as duplicate examples; this folder is the participant-safe place to browse
+examples.
 
 | Track | Example folder | What to inspect |
 |---|---|---|

@@ -10,7 +10,7 @@ examples as reference material when building your own agents, prompts, skills an
 | Path | Purpose |
 |---|---|
 | `agents/` | Active custom agents used by the hackathon workflow. Browse participant examples in `docs/tracks/examples/*/agents/`. |
-| `prompts/` | Active reusable prompts discoverable by Copilot. Browse participant examples in `docs/tracks/examples/*/prompts/`. |
+| `prompts/` | Active reusable prompts that must be discoverable by Copilot. Duplicate participant examples belong in `docs/tracks/examples/*/prompts/`. |
 | `instructions/` | Active authoring instructions for agent and prompt files. |
 | `workflows/` | Active CI workflows for infrastructure validation, app build, dependency review and CodeQL. |
 | `codeql-config.yml` | Active CodeQL configuration consumed by `workflows/app-ci.yml`. |

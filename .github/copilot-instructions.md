@@ -50,4 +50,5 @@ workload at three levels of agentic maturity.
   `handoffs`, and a named output contract.
 - Prompts: `.github/prompts/<workflow>-<step>-<verb>.prompt.md` — numbered, with inputs, task and
   expected output.
-- These are **reference examples**. Participants are expected to write their own.
+- Keep participant-safe reference examples under `docs/tracks/examples/`; `.github/` is only for
+  assets that must be discovered by Copilot, GitHub or GitHub Actions.
