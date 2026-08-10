@@ -4,6 +4,10 @@ applyTo: '**/*.prompt.md'
 
 # Writing a reusable prompt
 
+> **Purpose:** This file is active Copilot training material for authoring `.prompt.md` files. It stays
+> in `.github/instructions/` so the instructions apply automatically; participant-safe examples live
+> under [`docs/tracks/examples/`](../../docs/tracks/examples/).
+
 A prompt file defines **what to do now** — one step of a workflow, reusable and parameterised.
 
 ## Naming

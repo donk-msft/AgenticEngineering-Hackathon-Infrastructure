@@ -1,3 +1,6 @@
+# Purpose: active repository automation. This workflow validates infrastructure changes for the
+# hackathon; participant-safe workflow patterns and agentic examples live under docs/tracks/examples/.
+
 name: infra-ci
 
 on:

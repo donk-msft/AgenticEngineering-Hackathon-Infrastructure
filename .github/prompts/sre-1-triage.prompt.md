@@ -3,6 +3,11 @@ mode: agent
 description: Triage a reliability, drift or security finding for the deployed workload (expert track).
 ---
 
+# Purpose
+
+This prompt is active training material that can be run from `.github/prompts/` during the hackathon.
+Participant-safe prompt examples live under `docs/tracks/examples/`.
+
 # Inputs
 
 - `docs/desired-state.md`, `docs/operations-runbook.md`, `knowledge/`

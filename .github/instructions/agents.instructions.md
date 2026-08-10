@@ -4,6 +4,10 @@ applyTo: '**/*.agent.md'
 
 # Writing a custom agent
 
+> **Purpose:** This file is active Copilot training material for authoring `.agent.md` files. It stays
+> in `.github/instructions/` so the instructions apply automatically; participant-safe examples live
+> under [`docs/tracks/examples/`](../../docs/tracks/examples/).
+
 An agent file defines **who** does a piece of work. Keep it to one responsibility.
 
 ## Frontmatter

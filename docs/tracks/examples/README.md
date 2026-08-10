@@ -4,6 +4,11 @@ These folders contain sanitized example assets for teams that get stuck while bu
 
 Use them as reference patterns, not as files to copy over your own work. They deliberately avoid subscription ids, tenant ids, account names, resource ids, host names and other environment-specific values.
 
+Some files also exist under `.github/` because GitHub, Copilot and GitHub Actions only discover
+instructions, prompts and workflows from there. Treat those `.github/` files as active automation or
+training material, not as duplicate examples; this folder is the participant-safe place to browse
+examples.
+
 | Track | Example folder | What to inspect |
 |---|---|---|
 | Beginner | [`beginner/`](beginner/) | A seven-step agent, prompt, skill and handover pipeline |

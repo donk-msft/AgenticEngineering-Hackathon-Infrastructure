@@ -1,3 +1,6 @@
+# Purpose: active repository automation. Dependabot keeps NuGet and GitHub Actions dependencies
+# current for the hackathon; participant-safe examples live under docs/tracks/examples/.
+
 version: 2
 updates:
   - package-ecosystem: nuget

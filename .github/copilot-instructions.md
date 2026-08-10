@@ -1,5 +1,9 @@
 # Copilot Instructions — Agentic Engineering Hackathon (Infrastructure)
 
+> **Purpose:** This file is active repository automation/training material. Copilot and custom agents
+> use it for repository-wide guidance; participant-safe example assets live under
+> [`docs/tracks/examples/`](../docs/tracks/examples/).
+
 This repository is a **hackathon**. Participants build and operate the *Contoso Ticketing* Azure
 workload at three levels of agentic maturity.
 
@@ -46,4 +50,5 @@ workload at three levels of agentic maturity.
   `handoffs`, and a named output contract.
 - Prompts: `.github/prompts/<workflow>-<step>-<verb>.prompt.md` — numbered, with inputs, task and
   expected output.
-- These are **reference examples**. Participants are expected to write their own.
+- Keep participant-safe reference examples under `docs/tracks/examples/`; `.github/` is only for
+  assets that must be discovered by Copilot, GitHub or GitHub Actions.
