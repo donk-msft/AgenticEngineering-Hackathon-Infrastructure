@@ -5,7 +5,7 @@
 **Duration**: ~3 hours 45 minutes (excluding Azure propagation) · **Prerequisite**: Copilot Chat basics
 
 > This track is the guided version of **Use Case 1 (Infrastructure as Code)** from
-> [bram-boer/code-under-construction-hackathon](https://github.com/bram-boer/code-under-construction-hackathon/blob/main/docs/use-case-iac.md).
+> [pascalvanderheiden/code-under-construction-hackathon](https://github.com/pascalvanderheiden/code-under-construction-hackathon/blob/main/docs/use-case-iac.md).
 > There, you design the pipeline freely. Here, you are walked through it — one concept per step.
 
 ---
