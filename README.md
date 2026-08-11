@@ -19,10 +19,10 @@ Because all three tracks land on the identical baseline, **a team that finishes 
 
 ```mermaid
 flowchart LR
-    B["🟢 Beginner<br/>agents · skills · prompts · handovers"] --> W
-    I["🟡 Intermediate<br/>/plan · /fleet · fewer prompts"] --> W
+    B["🟢 <b>Beginner</b><br/><br/>Agents · skills · prompts · handovers"] --> W
+    I["🟡 <b>Intermediate</b><br/><br/>/plan · /fleet · fewer prompts"] --> W
     W["📦 Contoso Ticketing baseline<br/>deployed in Azure"] --> E
-    E["🔴 Expert<br/>SRE Agent · GHAS · Defender"]
+    E["🔴 <b>Expert</b><br/><br/>SRE Agent · GHAS · Defender"]
     R["⏩ Start here at expert<br/>az deployment sub create -f infra/main.bicep"] --> W
 ```
 
