@@ -5,9 +5,9 @@ The expert track uses two separate GitHub integrations:
 | Integration | Where | Purpose |
 |---|---|---|
 | Code/Knowledge Base repository | **Code** card during onboarding, or **Builder → Knowledge base** | Indexes source for investigation and file references |
-| GitHub OAuth connector | **Builder → Connectors** | Reads repository evidence and creates an approved issue |
+| GitHub connector (OAuth or fine-grained PAT) | **Builder → Connectors** | Reads repository evidence and creates an approved issue |
 
-Connect the repository first and wait until it is indexed. Then configure the GitHub OAuth connector
+Connect the repository first and wait until it is indexed. Then configure the GitHub connector
 with the narrowest access needed by the scenario:
 
 - Metadata and contents: read-only
