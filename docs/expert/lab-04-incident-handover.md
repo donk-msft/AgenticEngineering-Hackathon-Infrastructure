@@ -34,6 +34,25 @@ sequenceDiagram
     CI->>App: validated deploy via OIDC
 ```
 
+## Before the exercise: configure a review response plan
+
+Create one Azure Monitor response plan before injecting a fault:
+
+1. If a default `quickstart` plan is enabled, open **Builder → Incident response plans**, switch
+   to **Table view**, and delete it so the alert is not routed twice.
+2. Open **Builder → Agent Canvas → Create → Trigger → Incident response plan**.
+3. Name it `ticketing-incident-review`, select this SRE Agent, and match only the deployed
+   readiness/HTTP 5xx alert at **Severity 1 or 2**. Use the exact alert title shown in Azure Monitor,
+   not a broad all-incidents filter.
+4. Set **Agent autonomy level** to **Review**, never **Autonomous**, and leave the default
+   three-hour **Reinvestigation cooldown** enabled.
+5. Preview the matching incidents, create the plan, and confirm it is **On** with the intended
+   severity/title filters and cooldown.
+
+Review mode means the agent investigates and presents evidence before the learner approves issue
+creation. The SRE Agent must create at most one unassigned issue; the learner reviews it and assigns
+`copilot-swe-agent`.
+
 ## 1. Prepare the fault (20 min)
 
 The fault is defined once, for all tracks, in
@@ -92,17 +111,21 @@ Then **watch without helping**, in the SRE Agent's chat/incident view in the Azu
 
 When the agent proposes an action, evaluate it before approving:
 
-- Is this a **runtime** fix (restart, scale, revert a setting) → remediate in Azure, then update IaC so it is not drift.
-- Is this a **code or template** fix → hand it to GitHub Copilot as an issue.
+- Is this a **runtime** fix (restart, scale, restore a setting) → the SRE Agent only proposes it;
+  an authorised human executes it after approval, records the command and rollback, and updates
+  desired state where required.
+- Is this a **code or template** fix → approve one issue handover and let the learner assign the
+  reviewed issue to `copilot-swe-agent`.
 
-Approve, and confirm the GitHub issue that gets created contains: symptom, affected resource,
-supporting telemetry, root-cause hypothesis and suggested fix. **A handover without evidence is
-just a ticket.**
+Approve, and confirm exactly one **unassigned** GitHub issue contains: symptom, affected resource,
+supporting telemetry, root-cause hypothesis and suggested fix. **A handover without evidence is just
+a ticket.** The SRE Agent must not create a branch or pull request, merge changes, deploy code or
+make direct Azure changes.
 
 ## 4. Copilot fixes it (15 min)
 
-Assign the issue to GitHub Copilot (**GitHub → Issues → the issue → Assignees → Copilot**). It
-should open a pull request. Review it as an engineer:
+Assign the reviewed issue to GitHub Copilot (**GitHub → Issues → the issue → Assignees → Copilot**;
+API identity `copilot-swe-agent`). It should open a pull request. Review it as an engineer:
 
 - [ ] Does it fix the root cause or only the symptom?
 - [ ] Does it also fix the **template**, so the fault cannot recur on redeploy?
@@ -140,7 +163,9 @@ az deployment sub what-if \
 ## Definition of Done
 
 - [ ] An incident was injected, alerted and investigated by the SRE Agent
+- [ ] A Review-mode response plan matched only the intended alert and retained its cooldown
 - [ ] A handover was approved and produced a structured GitHub issue
+- [ ] The issue was unassigned until the learner reviewed and assigned it to Copilot
 - [ ] Copilot produced a PR that CI validated and deployed
 - [ ] The alert resolved and what-if reports no drift
 - [ ] The runbook was updated with what you learned
