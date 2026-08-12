@@ -44,14 +44,19 @@ Create one Azure Monitor response plan before injecting a fault:
 3. Name it `ticketing-incident-review`, select this SRE Agent, and match only the deployed
    readiness/HTTP 5xx alert at **Severity 1 or 2**. Use the exact alert title shown in Azure Monitor,
    not a broad all-incidents filter.
-4. Set **Agent autonomy level** to **Review**, never **Autonomous**, and leave the default
-   three-hour **Reinvestigation cooldown** enabled.
+4. Set **Agent autonomy level** to **Review** and leave the default three-hour
+   **Reinvestigation cooldown** enabled. Review is the required mode for the main exercise.
 5. Preview the matching incidents, create the plan, and confirm it is **On** with the intended
    severity/title filters and cooldown.
 
 Review mode means the agent investigates and presents evidence before the learner approves issue
 creation. The SRE Agent must create at most one unassigned issue; the learner reviews it and assigns
 `copilot-swe-agent`.
+
+> **Safety boundary:** Do not set the production-connected plan to **Automatic** (also labelled
+> **Autonomous** in some portal experiences). The repository escalation policy is approval-gated.
+> Automatic mode is an optional, isolated comparison exercise below, not the default operating
+> posture.
 
 ## 1. Prepare the fault (20 min)
 
@@ -158,6 +163,39 @@ az deployment sub what-if \
 3. Which knowledge file from [Lab 3](lab-03-sre-agent.md) would have made the investigation faster?
 4. Which parts of this loop would you let run without an approval gate — and which never?
 
+## 7. Optional autonomy comparison (10 min)
+
+Complete the main Review-mode exercise first. This comparison validates the behavior change without
+changing the learning objective or the repository's approval policy. It is only permitted with a
+disposable sandbox SRE Agent, workload, alert and GitHub repository; never reuse the
+production-connected agent or workload from Labs 3–4.
+
+1. Before enabling Automatic mode, verify the sandbox SRE Agent has only Reader access to the
+   sandbox resource group, has no runtime remediation or deployment permissions, and is connected
+   only to a disposable GitHub repository. If these conditions cannot be proven, skip this section.
+2. Create a **separate, sandbox-only response plan** with a sandbox alert title and severity filter;
+   do not edit the completed `ticketing-incident-review` plan or point the sandbox plan at the
+   production workload.
+3. Set **Agent autonomy level** to **Automatic** (or **Autonomous**, depending on the portal label),
+   keep the three-hour cooldown, and confirm the plan is **On**. Do not enable runtime remediation,
+   Azure mutation, deployment, merge or workflow permissions for this comparison.
+4. Inject one new, reversible fault from the contract and drive the matching alert. Observe whether
+   the agent proceeds to the configured handover without asking for approval. Record:
+
+   | Question | Your observation |
+   |---|---|
+   | Did the agent investigate before acting? | |
+   | Did it create an issue without approval? | |
+   | Was the issue unassigned and evidence-backed? | |
+   | Did the cooldown prevent duplicate processing? | |
+5. Revert the sandbox fault, confirm the sandbox alert and incident are resolved, and wait for all
+   Automatic/Autonomous runs to reach a terminal state. Verify whether an issue was already created.
+6. Disable the Automatic/Autonomous plan and confirm it is **Off**. Leave the production-connected
+   `ticketing-incident-review` plan **On** in **Review** before leaving the lab.
+
+If the tenant cannot provide this isolated sandbox, skip this comparison and record that the approval
+gate remains mandatory for the workload.
+
 ---
 
 ## Definition of Done
@@ -169,5 +207,7 @@ az deployment sub what-if \
 - [ ] Copilot produced a PR that CI validated and deployed
 - [ ] The alert resolved and what-if reports no drift
 - [ ] The runbook was updated with what you learned
+- [ ] Optional: Automatic/Autonomous mode was tested only in an isolated, handover-only plan and
+      then reverted to Review
 
 ➡️ Next: [Lab 5 — GHAS on the IaC repo](lab-05-ghas.md)
