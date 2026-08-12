@@ -102,7 +102,7 @@ if any of it becomes unavailable, the labs still work.
 
 | Topic | Optional further reading |
 |---|---|
-| Azure SRE Agent (Labs [3](../expert/lab-03-sre-agent.md), [4](../expert/lab-04-incident-handover.md)) | [Azure SRE Agent documentation](https://learn.microsoft.com/azure/sre-agent/overview) |
+| Azure SRE Agent (Labs [3](../expert/lab-03-sre-agent.md), [4](../expert/lab-04-incident-handover.md)) | [Azure SRE Agent documentation](https://sre.azure.com/docs/overview) · [Microsoft Learn](https://learn.microsoft.com/azure/sre-agent/overview) · [upstream workshop](https://github.com/JoranBergfeld/sre-agent-workshop) |
 | GHAS (Lab [5](../expert/lab-05-ghas.md)) | [GitHub Advanced Security documentation](https://docs.github.com/code-security) |
 | Defender for Cloud (Lab [6](../expert/lab-06-defender.md)) | [Microsoft Defender for Cloud DevOps security](https://learn.microsoft.com/azure/defender-for-cloud/defender-for-devops-introduction) |
 

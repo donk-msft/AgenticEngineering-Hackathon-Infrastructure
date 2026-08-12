@@ -3,8 +3,8 @@
 **Time**: 60 min · **Prerequisite**: [Lab 2 — Desired state & drift](lab-02-desired-state.md)
 
 This lab is **self-contained**: every step is described here, either as an Azure portal click-path or
-as an Azure CLI / Bicep command. The only external references are Microsoft's own product
-documentation, linked where a portal screen may have changed since this lab was written.
+as an Azure CLI / Bicep command. The SRE Agent setup experience changes regularly, so use the
+current portal flow and preserve the least-privilege and approval rules below.
 
 ## Objective
 
@@ -34,7 +34,8 @@ Answer as a team before touching the portal:
 - Which data sources does it investigate with? (Azure Monitor, Resource Graph, Service Health, activity logs)
 - Why does giving it *your* runbooks change the quality of its investigations?
 
-Reference reading: [What is Azure SRE Agent](https://learn.microsoft.com/azure/sre-agent/overview).
+Reference reading: [Azure SRE Agent overview](https://sre.azure.com/docs/overview) and
+[What is Azure SRE Agent](https://learn.microsoft.com/azure/sre-agent/overview).
 
 ## 2. Check prerequisites (5 min)
 
@@ -66,23 +67,17 @@ If your network is restricted, allow outbound access to `*.azuresre.ai`.
 
 Do this **in the Azure portal**. Nothing here depends on any other repository.
 
-1. Open the Azure portal and search the global search box for **SRE Agent**, then choose
-   **Create** (the agent experience is also reachable at <https://sre.azure.com>).
-2. **Basics**:
-   - **Subscription** — the subscription holding the Contoso Ticketing workload.
-   - **Resource group** — create a *separate* resource group for the agent itself, for example
-     `rg-sreagent-dev-swedencentral`. Keeping the agent out of the workload resource group means
-     the agent is not part of the workload's own desired state or blast radius.
-   - **Name** — `sre-ticketing-dev-swedencentral` (CAF naming, as everywhere else).
-   - **Region** — `swedencentral`, `eastus2` or `australiaeast`, matching your workload.
-   - **Model provider / Application Insights** — accept the defaults unless your coaches say
-     otherwise.
-3. **Resource groups to monitor** — select **only** `rg-ticketing-dev-swedencentral`. Do **not**
-   select the subscription or unrelated resource groups; least privilege is a graded requirement.
-4. **Permission level** — start at **Reader**. Raise a single resource group to **Privileged** only
-   after [Lab 4](lab-04-incident-handover.md) has shown you what the agent proposes, and record the
-   decision in your autonomy matrix in [Lab 7](lab-07-close-the-loop.md).
-5. **Review + create**.
+1. Open <https://sre.azure.com>, select **Create**, and select **Set up your agent**.
+2. Select the subscription where the SRE Agent resource will be created. This does not grant the
+   agent's managed identity access to the workload.
+3. Create the agent with a CAF-compliant name and a supported region. Keep the agent resource in a
+   separate resource group so it is outside the workload's desired state and blast radius.
+4. On the **Azure Resources** card, add **only** `rg-ticketing-dev-swedencentral`, review the
+   **Reader** role grant and finish the permission setup. Do not grant subscription-wide access.
+5. Connect monitoring and the repository, then select **Done and go to agent**.
+6. Keep the agent at **Reader** for this track. Runtime changes are executed by an authorised human
+   after approval and recorded in the autonomy matrix in [Lab 7](lab-07-close-the-loop.md); do not
+   grant the SRE Agent write access.
 
 After deployment, open the agent → **Settings → Managed resources** and confirm the scope. Record
 two values — [Lab 4](lab-04-incident-handover.md) needs both:
@@ -196,15 +191,21 @@ exactly the beginner track's **skill** concept, applied to an operations agent.
 Without this connection, [Lab 4](lab-04-incident-handover.md)'s handover to Copilot cannot happen.
 In the SRE Agent:
 
-1. Open the agent → **Builder → Knowledge base → Add repository**.
-2. Choose **GitHub**, authenticate with **OAuth** (simplest for the hackathon) or with a GitHub App
-   if your organisation requires one. Do not paste a long-lived personal access token into any file
-   in this repository.
-3. Select your Contoso Ticketing repository so the agent can read `knowledge/`, `infra/` and `src/`.
-4. Open **Builder → Connectors → Add connector → GitHub** and authorise it. This is what lets the
-   agent **create issues** — the knowledge-base connection alone is read-only.
+1. On the agent's **Code** card, select **+ → GitHub**, authenticate, and select the repository
+   containing `knowledge/`, `infra/` and `src/`.
+2. For an existing agent, use **Builder → Knowledge base → Add repository** instead. Wait for the
+   repository connection to show as indexed; a temporary chat attachment is not persistent.
+3. Open **Builder → Connectors** and configure the **GitHub OAuth connector** for issue handoff.
+   Use a fine-grained PAT scoped only to this repository when OAuth is not suitable. Grant repository
+   metadata and contents read access, issues read/write, and pull requests/actions read-only.
+   Enable only the operations needed to read evidence and create an approved issue; explicitly
+   disable pull-request and workflow write operations.
+4. Verify the connector with: *"List the open issues in `<owner>/<repo>` and summarise them."*
 5. In **GitHub → repository Settings → Copilot → Coding agent**, make sure the Copilot coding agent
-   is enabled so it can be assigned the issues the SRE Agent files.
+   is enabled so the learner can assign the reviewed issue to `copilot-swe-agent`.
+
+See [Connect GitHub to the Azure SRE Agent](../connect-github-to-sre-agent.md) for the least-privilege
+connector setup and token-handling rules.
 
 Verify by asking the agent, in its chat: *"List the open issues in `<owner>/<repo>` and summarise
 them."* A correct answer proves both the connector and its permissions.
