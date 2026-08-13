@@ -24,6 +24,9 @@ param appSubnetPrefix string = '10.10.1.0/24'
 @description('Address prefix of the private endpoint subnet.')
 param privateEndpointSubnetPrefix string = '10.10.2.0/24'
 
+@description('Address prefix of the private bootstrap VM subnet.')
+param bootstrapSubnetPrefix string = '10.10.3.0/24'
+
 var suffix = '${workload}-${environment}-${location}'
 
 module appNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
@@ -99,6 +102,49 @@ module privateEndpointNsg 'br/public:avm/res/network/network-security-group:0.5.
   }
 }
 
+module bootstrapNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: 'nsg-bootstrap-${suffix}'
+  params: {
+    name: 'nsg-bootstrap-${environment}-${location}'
+    location: location
+    tags: tags
+    diagnosticSettings: [
+      {
+        name: 'diag-to-law'
+        workspaceResourceId: logAnalyticsWorkspaceId
+      }
+    ]
+    securityRules: [
+      {
+        name: 'AllowSshFromVirtualNetwork'
+        properties: {
+          priority: 100
+          direction: 'Inbound'
+          access: 'Allow'
+          protocol: 'Tcp'
+          sourceAddressPrefix: 'VirtualNetwork'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '22'
+        }
+      }
+      {
+        name: 'DenyAllInbound'
+        properties: {
+          priority: 4096
+          direction: 'Inbound'
+          access: 'Deny'
+          protocol: '*'
+          sourceAddressPrefix: '*'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+          destinationPortRange: '*'
+        }
+      }
+    ]
+  }
+}
+
 module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
   name: 'vnet-${suffix}'
   params: {
@@ -120,6 +166,11 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
         addressPrefix: privateEndpointSubnetPrefix
         networkSecurityGroupResourceId: privateEndpointNsg.outputs.resourceId
       }
+      {
+        name: 'snet-bootstrap'
+        addressPrefix: bootstrapSubnetPrefix
+        networkSecurityGroupResourceId: bootstrapNsg.outputs.resourceId
+      }
     ]
   }
 }
@@ -127,3 +178,4 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
 output virtualNetworkId string = virtualNetwork.outputs.resourceId
 output appSubnetId string = virtualNetwork.outputs.subnetResourceIds[0]
 output privateEndpointSubnetId string = virtualNetwork.outputs.subnetResourceIds[1]
+output bootstrapSubnetId string = virtualNetwork.outputs.subnetResourceIds[2]

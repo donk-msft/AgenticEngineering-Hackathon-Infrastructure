@@ -34,15 +34,62 @@ creates that principal, the identity has no database authorization with which to
 USER`. This bootstrap is a one-time data-plane trust establishment and must be performed by the
 configured Microsoft Entra SQL administrator.
 
-Run the idempotent script from a host that is connected to the workload VNet, such as a secured
-management VM, a self-hosted runner, or a workstation connected through approved private
-connectivity:
+The baseline deploys a private, burstable `Standard_B1s` bootstrap VM with Azure Bastion Developer.
+It has no public IP address and cloud-init installs Azure CLI and Go-based `sqlcmd`. Use this VM
+for the bootstrap; it is connected to the workload VNet and can resolve the SQL private endpoint.
+
+Before deployment, set `bootstrapVmSshPublicKey` in `infra/main.bicepparam` to the contents of a
+new or existing SSH public key. Keep the matching private key outside source control and never put
+it in a template or a GitHub secret:
 
 ```bash
+ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap
+```
+
+After the deployment completes, open the deployed Key Vault (`kv-...` from the subscription outputs),
+create or reuse a secret named `bootstrap-vm-ssh-private-key`, and upload the matching private key:
+
+```bash
+az keyvault secret set \
+  --vault-name <kv-name> \
+  --name bootstrap-vm-ssh-private-key \
+  --file ~/.ssh/ticketing-bootstrap
+```
+
+The operator who uploads the secret and then opens the VM via Bastion needs the vault permissions to
+write and read the secret. The usual pattern is:
+
+```bash
+# upload access
+az role assignment create \
+  --assignee <your-object-id> \
+  --role "Key Vault Secrets Officer" \
+  --scope "$(az keyvault show --name <kv-name> --query id -o tsv)"
+
+# read access for portal SSH selection
+az role assignment create \
+  --assignee <your-object-id> \
+  --role "Key Vault Secrets User" \
+  --scope "$(az keyvault show --name <kv-name> --query id -o tsv)"
+```
+
+Then find `vm-bootstrap-...` in the resource group, select **Connect** > **Bastion**, and choose
+**SSH Private Key from Azure Key Vault**. Pick the `bootstrap-vm-ssh-private-key` secret; Bastion
+retrieves the private key from Key Vault at the moment of the SSH session. Azure Bastion Developer
+provides browser SSH and clipboard copy/paste, but not native-client file transfer. In the Bastion
+terminal, run `cloud-init status --wait`, then create `~/bootstrap-ticketing-database.sh` with
+`nano`, paste the contents of [`scripts/bootstrap-ticketing-database.sh`](../scripts/bootstrap-ticketing-database.sh)
+from your local checkout, save it, and make it executable.
+
+```bash
+cloud-init status --wait
+az --version
+sqlcmd --version
+chmod 700 ~/bootstrap-ticketing-database.sh
 az login
 az account show --query "{subscription:name, user:user.name, tenant:tenantId}" -o table
 
-./scripts/bootstrap-ticketing-database.sh \
+~/bootstrap-ticketing-database.sh \
   --deployment-name ticketing-baseline
 ```
 

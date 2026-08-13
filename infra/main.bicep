@@ -44,6 +44,12 @@ param sqlAdminLogin string
 ])
 param sqlAdminPrincipalType string = 'User'
 
+@description('Linux administrator username for the private bootstrap VM.')
+param bootstrapVmAdminUsername string = 'azureuser'
+
+@description('SSH public key for the private bootstrap VM administrator.')
+param bootstrapVmSshPublicKey string
+
 var regionToken = location
 var resourceGroupName = 'rg-${workload}-${environment}-${regionToken}'
 
@@ -100,6 +106,33 @@ module database 'modules/database.bicep' = {
   }
 }
 
+module bootstrapKeyVault 'modules/bootstrap-keyvault.bicep' = {
+  scope: rg
+  name: 'bootstrap-keyvault'
+  params: {
+    workload: workload
+    environment: environment
+    location: location
+    tags: tags
+  }
+}
+
+module bootstrapVm 'modules/bootstrap-vm.bicep' = {
+  scope: rg
+  name: 'bootstrap-vm'
+  params: {
+    workload: workload
+    environment: environment
+    location: location
+    tags: tags
+    bootstrapSubnetId: networking.outputs.bootstrapSubnetId
+    virtualNetworkId: networking.outputs.virtualNetworkId
+    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    adminUsername: bootstrapVmAdminUsername
+    adminSshPublicKey: bootstrapVmSshPublicKey
+  }
+}
+
 module webapp 'modules/webapp.bicep' = {
   scope: rg
   name: 'webapp'
@@ -137,3 +170,10 @@ output sqlServerName string = database.outputs.sqlServerName
 output databaseName string = database.outputs.databaseName
 output logAnalyticsWorkspaceId string = monitoring.outputs.logAnalyticsWorkspaceId
 output applicationInsightsName string = monitoring.outputs.applicationInsightsName
+output bootstrapKeyVaultName string = bootstrapKeyVault.outputs.name
+output bootstrapKeyVaultResourceId string = bootstrapKeyVault.outputs.resourceId
+output bootstrapVmName string = bootstrapVm.outputs.bootstrapVmName
+output bootstrapVmResourceId string = bootstrapVm.outputs.bootstrapVmResourceId
+output bootstrapVmAdminUsername string = bootstrapVm.outputs.bootstrapVmAdminUsername
+output bastionName string = bootstrapVm.outputs.bastionName
+output bastionResourceId string = bootstrapVm.outputs.bastionResourceId

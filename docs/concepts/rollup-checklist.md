@@ -20,6 +20,8 @@ only amplify the problem otherwise.
 - [ ] `dotnet build src/ContosoTicketing` passes and the app is deployed to the App Service
 - [ ] Every module in `infra/` uses a version-pinned Azure Verified Module
 - [ ] A `.bicepparam` (or equivalent) holds all environment-specific values — no hardcoded ids in templates
+- [ ] A private, burstable bootstrap VM and Azure Bastion Developer are deployed; the matching SSH
+  private key is retained outside source control
 
 Expert Lab 2 uses `what-if` as a drift detector; that only works if source is the source of truth.
 
@@ -66,6 +68,8 @@ Note these — the expert labs reference them:
 | Web app name | |
 | SQL server name | |
 | Log Analytics workspace name | |
+| Bootstrap VM name | |
+| Bastion name | |
 | GitHub repository | |
 | Web app default host name | |
 

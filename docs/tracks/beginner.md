@@ -47,9 +47,13 @@ Reference versions live in the sanitized stuck-team example set at [`examples/be
    installed there), local VS Code without the dev container, or Azure Cloud Shell for Bash
    deployment commands. See [Execution Environments](../concepts/environment-options.md) for what
    each option gives you and where each step in this guide should run.
-2. In `infra/main.bicepparam`, choose a unique `workload` or `environment` token and replace the
-   placeholder SQL administrator object ID and login with an Entra group or user in your tenant.
-   This avoids resource-name collisions and makes the later database bootstrap possible.
+   2. In `infra/main.bicepparam`, choose a unique `workload` or `environment` token, replace the
+   placeholder SQL administrator object ID and login with an Entra group or user in your tenant, and
+   set `bootstrapVmSshPublicKey` to your SSH public key. Generate one if needed with
+   `ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap`. Keep the matching private key outside the
+   repository and upload it to the deployment Key Vault as `bootstrap-vm-ssh-private-key` after the
+   baseline deploys. This avoids resource-name collisions and makes the later database bootstrap
+   possible.
 3. Sign in to Azure and confirm the subscription with your coach:
    ```bash
    az login
@@ -184,11 +188,14 @@ cd /tmp/publish && zip -r ../app.zip . && cd -
 az webapp deploy --resource-group <rg> --name <webapp> --src-path /tmp/app.zip --type zip
 ```
 
-After publishing, switch to a host connected to the workload VNet and run
-`./scripts/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured
-Entra SQL administrator. Do not run this from ordinary Cloud Shell, a devcontainer or a Codespace:
-none of them can normally resolve the SQL private endpoint — see
-[Execution Environments](../concepts/environment-options.md).
+After publishing, open the deployed Key Vault in the same resource group, upload the private key as
+`bootstrap-vm-ssh-private-key`, then open the deployed private `vm-bootstrap-...` through Azure
+Bastion Developer and select **SSH Private Key from Azure Key Vault**. Paste
+`scripts/bootstrap-ticketing-database.sh` from your checkout into `nano` on the VM, run
+`chmod 700 ~/bootstrap-ticketing-database.sh`, then run
+`~/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured Entra
+SQL administrator. The VM has Azure CLI and `sqlcmd` preinstalled; do not expose SQL publicly.
+See the exact procedure in the [operations runbook](../operations-runbook.md#bootstrap-sql-access).
 
 ✅ **Checkpoint**: the deployment succeeds, `az deployment sub show` reports `Succeeded`, and
 `/healthz`, `/readyz` and `/api/tickets` all return `200`. This proves the app uses managed identity

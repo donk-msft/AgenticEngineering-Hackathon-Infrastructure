@@ -41,8 +41,11 @@ flowchart LR
    VS Code with **Dev Containers: Reopen in Container**, local VS Code without the dev container, or
    Azure Cloud Shell. See [Execution Environments](../concepts/environment-options.md) for what each
    gives you. In `infra/main.bicepparam`, choose a unique workload/environment token and replace the
-   sample SQL administrator object ID and login with values from your tenant.
-2. Run `az login` and confirm the subscription with your coach. Your team must deploy to its own
+   sample SQL administrator object ID and login with values from your tenant. Set
+   `bootstrapVmSshPublicKey` to your SSH public key; generate one if needed with
+   `ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap`. Keep the matching private key outside the
+   repository and upload it to the deployed Key Vault as `bootstrap-vm-ssh-private-key` before
+   using Bastion.2. Run `az login` and confirm the subscription with your coach. Your team must deploy to its own
    subscription.
 3. Install and authenticate the **Copilot CLI**; `/fleet` runs in its interactive terminal:
    ```bash
@@ -121,11 +124,12 @@ docs/test-results.md and docs/operations-runbook.md.
 ```
 
 Publish the application with the Bash commands in [the track entry guide](README.md) — from any
-supported environment — then run
-`./scripts/bootstrap-ticketing-database.sh --deployment-name <deployment-name>` as the configured
-Entra SQL administrator from a host connected to the workload VNet. Cloud Shell, a devcontainer or
-a Codespace are normally not such a host — see
-[Execution Environments](../concepts/environment-options.md); never make SQL public to bypass this.
+supported environment. Then open the deployed Key Vault, upload the matching private key as
+`bootstrap-vm-ssh-private-key`, open the deployed private `vm-bootstrap-...` through Azure
+Bastion Developer, select **SSH Private Key from Azure Key Vault**, paste
+`scripts/bootstrap-ticketing-database.sh` into `nano` in its browser SSH session, and run it as
+the configured Entra SQL administrator. The VM has Azure CLI and `sqlcmd` preinstalled; never
+make SQL public to bypass this. Follow the [operations runbook](../operations-runbook.md#bootstrap-sql-access).
 
 ✅ **Checkpoint**: deployment `Succeeded`; the private endpoint is approved; `/healthz`, `/readyz`
 and `/api/tickets` return `200`; all live acceptance criteria pass; and evidence documents exist.
