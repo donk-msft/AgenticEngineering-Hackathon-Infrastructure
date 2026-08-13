@@ -42,12 +42,18 @@ flowchart TB
             subgraph snetpe["snet-privateendpoints 10.10.2.0/24 · nsg-pep"]
                 pep["Private Endpoint"]
             end
+            subgraph snetbootstrap["snet-bootstrap 10.10.3.0/24 · nsg-bootstrap"]
+                vm["Bootstrap VM<br/>Standard_B1s · no public IP"]
+            end
         end
+        bastion["Azure Bastion Developer"]
         sql["Azure SQL<br/>publicNetworkAccess: Disabled<br/>Entra-only auth"]
         law["Log Analytics + App Insights"]
     end
     app -->|VNet integration| pep --> sql
     app --> law
+    bastion -->|browser SSH| vm
+    vm --> pep
 ```
 
 On top of it runs [`src/ContosoTicketing`](src/ContosoTicketing/) — a minimal .NET 8 API exposing
@@ -61,6 +67,7 @@ See [the fault and vulnerability contract](docs/concepts/fault-and-vulnerability
 - No public database access — Private Endpoint + private DNS only
 - Managed identity everywhere — **no passwords, no connection-string secrets**
 - NSGs with an explicit deny-all rule, TLS 1.2+, HTTPS only
+- A private burstable bootstrap VM with Azure Bastion Developer for the one-time private SQL bootstrap
 - Diagnostics wired into Log Analytics
 
 See [`docs/concepts/workload.md`](docs/concepts/workload.md) for the full specification and acceptance criteria.
@@ -72,13 +79,14 @@ See [`docs/concepts/workload.md`](docs/concepts/workload.md) for the full specif
 These are **planning ranges**, not a quote: prices vary by region, agreement, usage and telemetry
 volume. They assume the supplied `swedencentral` baseline runs for 24 consecutive hours: one
 always-on Linux P0v3 App Service plan, a 0.5-vCore minimum General Purpose serverless SQL database,
-private networking and low-volume Azure Monitor ingestion. The database can pause after 60 minutes
-of inactivity, but the App Service plan cannot.
+private networking, a burstable Standard_B1s bootstrap VM, free Azure Bastion Developer, and
+low-volume Azure Monitor ingestion. The database can pause after 60 minutes of inactivity, but the
+App Service plan cannot.
 
 | Track | Estimated Azure cost / 24 h | Assumption |
 |---|---:|---|
-| 🟢 Beginner | **€5–€8** | Shared baseline only |
-| 🟡 Intermediate | **€5–€8** | Same shared baseline |
+| 🟢 Beginner | **€5–€9** | Shared baseline, including bootstrap VM |
+| 🟡 Intermediate | **€5–€9** | Same shared baseline |
 | 🔴 Expert | **€7–€14** | Baseline plus the Defender plans used in Lab 6 |
 
 GHAS licensing is a GitHub entitlement and is **not** included. Alerting, Application Insights
@@ -159,6 +167,12 @@ Then retrieve the group's values and copy them into `sqlAdminObjectId` and `sqlA
 az ad group show --group "sg-hackathon-sqladmins" \
   --query "{objectId:id, login:displayName}" -o table
 ```
+
+- Generate an SSH key with `ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap` and copy the
+  public-key contents into `bootstrapVmSshPublicKey`. Keep the matching private key outside source
+  control; after the baseline deploys, upload it to the resource group's Key Vault as the secret
+  `bootstrap-vm-ssh-private-key` and select that secret when you open the VM through Azure Bastion
+  Developer.
 
 ---
 

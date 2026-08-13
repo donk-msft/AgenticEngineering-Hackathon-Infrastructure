@@ -19,11 +19,13 @@ actually supports it.
 | `dotnet build` / `dotnet publish` | ✅ .NET 8 SDK | ✅ if .NET 8 SDK is installed | ✅ preinstalled |
 | `az webapp deploy` (publish the app) | ✅ | ✅ | ✅ |
 | `./scripts/bootstrap-ticketing-database.sh` (must resolve the SQL private endpoint) | ⚠️ only if the container/Codespace is network-joined to the workload VNet (not the default) | ✅ if the machine is VPN/ExpressRoute/Bastion-connected to the VNet | ❌ not normally VNet-connected |
+| Bootstrap from the deployed private VM | Copy the script from here into the Bastion browser session | Copy the script from here into the Bastion browser session | Copy the script from here into the Bastion browser session |
 
 Whenever a guide says "run this from a host connected to the workload VNet", none of the three
-default options satisfy that out of the box — use a jumpbox, VPN gateway, Azure Bastion session or
-a self-hosted runner that is joined to the VNet. Never enable public SQL access to work around this
-boundary.
+default options satisfy that out of the box. The shared baseline deploys a private `Standard_B1s`
+bootstrap VM and Azure Bastion Developer specifically for this task. Connect through the Azure
+portal, paste the script from your checkout into the browser-based SSH session, and run it there.
+Never enable public SQL access to work around this boundary.
 
 Every track guide links back to this page instead of repeating environment caveats inline — if a
 step doesn't specify where to run it, any option in the "✅" columns above is fine.

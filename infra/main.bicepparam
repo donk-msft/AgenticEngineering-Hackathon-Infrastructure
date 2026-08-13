@@ -14,3 +14,9 @@ param costCenter = 'hackathon'
 param sqlAdminObjectId = '00000000-0000-0000-0000-000000000000'
 param sqlAdminLogin = 'sg-hackathon-sqladmins'
 param sqlAdminPrincipalType = 'Group'
+
+// Generate a key pair with: ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap
+// Replace this placeholder with the contents of ~/.ssh/ticketing-bootstrap.pub.
+// Keep the matching private key outside source control and upload it to the deployment Key Vault
+// as the secret name bootstrap-vm-ssh-private-key before authenticating through Bastion.
+param bootstrapVmSshPublicKey = 'ssh-ed25519 REPLACE_WITH_YOUR_PUBLIC_KEY ticketing-bootstrap'

@@ -32,17 +32,22 @@ az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
   --name app-ticketing-dev-swedencentral --src-path /tmp/app.zip --type zip
 ```
 
-Then, from a host connected to the workload VNet, run the one-time bootstrap as the configured
-Microsoft Entra SQL administrator:
+Then open the resource group's Key Vault, upload the matching private key as
+`bootstrap-vm-ssh-private-key`, and open the deployed private `vm-bootstrap-...` through Azure
+Bastion Developer. In its browser SSH session, select **SSH Private Key from Azure Key Vault**,
+paste [`scripts/bootstrap-ticketing-database.sh`](../../scripts/bootstrap-ticketing-database.sh)
+from your checkout into `nano`, run `chmod 700 ~/bootstrap-ticketing-database.sh`, and run the
+one-time bootstrap as the configured Microsoft Entra SQL administrator:
 
 ```bash
-./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
+~/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
 ```
 
-Ordinary Cloud Shell, and a devcontainer/Codespace by default, cannot normally reach the SQL
-private endpoint — see [Execution Environments](../concepts/environment-options.md). The starting
-state is ready
-only when `/healthz`, `/readyz` and `/api/tickets` return `200`, Application Insights receives
+The VM is private, uses SSH key authentication through a Key Vault-backed private key secret, and has
+Azure CLI and `sqlcmd` preinstalled. Azure Bastion Developer supports browser copy/paste but not
+file transfer; the full procedure is in the [operations runbook](../operations-runbook.md#bootstrap-sql-access).
+The key is not stored in source control or embedded in a deployment parameter. The starting state is
+ready only when `/healthz`, `/readyz` and `/api/tickets` return `200`, Application Insights receives
 telemetry, and the SQL server remains private. Use the [roll-up checklist](../concepts/rollup-checklist.md)
 to record the resource names and prove this same state before starting either lane.
 
