@@ -1,6 +1,6 @@
 # 🔴 Expert Track — Reliable and Secure by Design
 
-**Goal**: take the deployed [Contoso Ticketing baseline](../concepts/workload.md) from "it deployed" to "it stays healthy and it is secure end-to-end" — infrastructure that is architected, planned, tested, built, deployed **and documented**, kept in a desired, reliable state by the **Azure SRE Agent**, and protected code-to-cloud by **GHAS + Microsoft Defender for Cloud**.
+**Goal**: take the deployed [Contoso Ticketing baseline](../concepts/workload.md) from "it deployed" to "it stays healthy and it is secure end-to-end" — infrastructure that is architected, planned, tested, built, deployed **and documented**, kept in a desired, reliable state by the **Azure SRE Agent**, and — in the two *optional* security labs — protected code-to-cloud by **GHAS + Microsoft Defender for Cloud**.
 
 **Duration**: ~4 hours for a team running the reliability and security lanes in parallel; ~6 hours solo · **Prerequisite**: a deployed baseline
 
@@ -80,13 +80,18 @@ If the handover loop is unclear, inspect the sanitized examples in [`examples/ex
 | 2 | [Desired state & drift](../expert/lab-02-desired-state.md) | What-if as a drift detector; guard rails via Azure Policy | 25 min |
 | 3 | [Onboard the Azure SRE Agent](../expert/lab-03-sre-agent.md) | Connect the SRE Agent to the resource group and to GitHub | 35 min |
 | 4 | [Incident → agent handover](../expert/lab-04-incident-handover.md) | Inject a fault, watch SRE Agent investigate, approve the handover to Copilot, ship the fix | 50 min |
-| 5 | [GHAS on the IaC repo](../expert/lab-05-ghas.md) | CodeQL, secret scanning + push protection, dependency review, branch protection | 35 min |
-| 6 | [Defender for Cloud & code-to-cloud](../expert/lab-06-defender.md) | Defender plans, the GitHub connector, correlating a GHAS finding with the running workload | 40 min |
+| 5 | [GHAS on the IaC repo](../expert/lab-05-ghas.md) *(optional — needs a GHAS-enabled repository)* | CodeQL, secret scanning + push protection, dependency review, branch protection | 35 min |
+| 6 | [Defender for Cloud & code-to-cloud](../expert/lab-06-defender.md) *(optional — needs Defender plan budget/permissions)* | Defender plans, the GitHub connector, correlating a GHAS finding with the running workload | 40 min |
 | 7 | [Close the loop](../expert/lab-07-close-the-loop.md) | Route reliability and security findings back into the agentic pipeline | 25 min |
 
-Labs 1–2 are prerequisites for the rest. Run Labs 3–4 (reliability) and 5–6 (security) in parallel
-after Lab 2, then reconvene for Lab 7. Azure and GitHub propagation can take longer than the
-hands-on time; while waiting, complete the evidence and review tasks rather than extending the lab.
+Labs 1–2 are prerequisites for the rest. Run Labs 3–4 (reliability) and, **if your team has GHAS
+access and Defender budget**, 5–6 (security) in parallel after Lab 2, then reconvene for Lab 7.
+Labs 5 and 6 are optional: they depend on entitlements (a GHAS-enabled repository, permission and
+budget to enable Defender plans) that not every team or subscription has. Skipping them does not
+block Lab 7 — teams without those entitlements complete Lab 7 for the reliability lane only and
+note the security lane as skipped in `docs/feedback-loops.md`. Azure and GitHub propagation can
+take longer than the hands-on time; while waiting, complete the evidence and review tasks rather
+than extending the lab.
 
 ---
 
@@ -99,8 +104,8 @@ if any of it becomes unavailable, the labs still work.
 | Topic | Optional further reading |
 |---|---|
 | Azure SRE Agent (Labs [3](../expert/lab-03-sre-agent.md), [4](../expert/lab-04-incident-handover.md)) | [Azure SRE Agent documentation](https://sre.azure.com/docs/overview) · [Microsoft Learn](https://learn.microsoft.com/azure/sre-agent/overview) · [upstream workshop](https://github.com/JoranBergfeld/sre-agent-workshop) |
-| GHAS (Lab [5](../expert/lab-05-ghas.md)) | [GitHub Advanced Security documentation](https://docs.github.com/code-security) |
-| Defender for Cloud (Lab [6](../expert/lab-06-defender.md)) | [Microsoft Defender for Cloud DevOps security](https://learn.microsoft.com/azure/defender-for-cloud/defender-for-devops-introduction) |
+| GHAS — optional (Lab [5](../expert/lab-05-ghas.md)) | [GitHub Advanced Security documentation](https://docs.github.com/code-security) |
+| Defender for Cloud — optional (Lab [6](../expert/lab-06-defender.md)) | [Microsoft Defender for Cloud DevOps security](https://learn.microsoft.com/azure/defender-for-cloud/defender-for-devops-introduction) |
 
 Use them as reference material, not as copy-paste targets — the point is to apply the pattern to **your** workload.
 
@@ -114,9 +119,9 @@ Use them as reference material, not as copy-paste targets — the point is to ap
 - [ ] The Azure SRE Agent is onboarded to the workload's resource group and connected to this GitHub repo
 - [ ] An injected incident produced an SRE Agent investigation, an approved remediation, and a GitHub issue
 - [ ] That issue was handed to Copilot, which produced a PR that CI validated and deployed
-- [ ] CodeQL, secret scanning with push protection, dependency review and Dependabot are on; `main` is protected and CodeQL is a required check
-- [ ] Defender for Cloud plans are enabled and the GitHub connector correlates a repository finding with the running workload
-- [ ] A written explanation of how reliability and security findings feed back into the agentic pipeline
+- [ ] *(Optional, if your team ran Lab 5)* CodeQL, secret scanning with push protection, dependency review and Dependabot are on; `main` is protected and CodeQL is a required check
+- [ ] *(Optional, if your team ran Lab 6)* Defender for Cloud plans are enabled and the GitHub connector correlates a repository finding with the running workload
+- [ ] A written explanation of how reliability findings — and security findings, if you ran the optional labs — feed back into the agentic pipeline
 
 ---
 

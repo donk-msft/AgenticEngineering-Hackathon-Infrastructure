@@ -47,7 +47,7 @@ The SRE Agent investigates using Azure Monitor data. No telemetry, no investigat
 - [ ] No passwords or connection secrets in app settings, outputs or source
 - [ ] Your account has `Contributor` **and** `User Access Administrator` on the subscription
 
-Labs 3, 5 and 6 assign roles, enable Defender plans and create connectors.
+Labs 3, 5 and 6 assign roles, enable Defender plans and create connectors. Labs 5 and 6 are optional.
 
 ## 6. Repository hygiene
 
@@ -55,7 +55,7 @@ Labs 3, 5 and 6 assign roles, enable Defender plans and create connectors.
 - [ ] The default branch is `main` and your work is merged into it
 - [ ] Your architecture, plan, test results and runbook are committed
 
-Labs 4–6 operate on the repository: PRs, CodeQL, branch protection and the Defender GitHub connector.
+Labs 4–6 operate on the repository: PRs, CodeQL, branch protection and the Defender GitHub connector. Labs 5 and 6 (CodeQL, Defender connector) are optional.
 
 ## 7. Record your baseline
 

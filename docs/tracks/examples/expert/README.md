@@ -6,6 +6,8 @@ This folder shows how day-2 reliability and security work hands back into the da
 - [`prompts/`](prompts/) — drift, incident and security finding workflows.
 - [`skills/operations-feedback-loop/SKILL.md`](skills/operations-feedback-loop/SKILL.md) — shared response policy.
 - [`handovers/`](handovers/) — issue-style handovers from operations signals to Copilot.
+- [`outputs/`](outputs/) — written examples of correctly implemented lab output (CI jobs, `what-if`
+  diffs, CodeQL gates, Defender connector state) so participants can validate their own steps.
 
 The examples are sanitized and use placeholders for all environment values.
 

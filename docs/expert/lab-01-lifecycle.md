@@ -64,6 +64,8 @@ Extend it to add a **what-if** job against your subscription, authenticating wit
 
 ✅ **Checkpoint**: open a PR that breaks a Bicep file on purpose. CI must fail. Revert; CI must pass.
 
+📄 See [an example what-if job and passing/failing CI output](../tracks/examples/expert/outputs/lab-01-ci-what-if-job.md) to check your implementation against.
+
 ## 4. Make `main` protected (10 min)
 
 In **GitHub → repository Settings → Branches → Add branch ruleset** (or *Branch protection rules*):
@@ -72,7 +74,7 @@ In **GitHub → repository Settings → Branches → Add branch ruleset** (or *B
 - [ ] Require the `infra-ci` check to pass
 - [ ] Block force pushes
 
-[Lab 5](lab-05-ghas.md) adds CodeQL as a second required check.
+[Lab 5](lab-05-ghas.md) *(optional)* adds CodeQL as a second required check.
 
 ---
 

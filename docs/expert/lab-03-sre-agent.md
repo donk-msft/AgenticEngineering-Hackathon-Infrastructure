@@ -224,4 +224,6 @@ them."* A correct answer proves both the connector and its permissions.
 - [ ] `knowledge/` contains architecture, at least one runbook and an escalation policy
 - [ ] The agent is connected to your GitHub repository and can list its issues
 
+📄 See [an example onboarding confirmation and approval-gate behaviour](../tracks/examples/expert/outputs/lab-03-sre-agent-onboarding.md) to check your implementation against.
+
 ➡️ Next: [Lab 4 — Incident → agent handover](lab-04-incident-handover.md)
