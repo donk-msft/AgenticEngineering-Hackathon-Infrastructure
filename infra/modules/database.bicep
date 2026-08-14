@@ -18,19 +18,11 @@ param privateEndpointSubnetId string
 @description('Virtual network linked to the private DNS zone.')
 param virtualNetworkId string
 
-@description('Microsoft Entra object id of the SQL Server administrator.')
+@description('Object id of the user-assigned managed identity that becomes the sole SQL Server Entra administrator (the database-bootstrap deployment script identity).')
 param sqlAdminObjectId string
 
-@description('Display name of the Microsoft Entra principal that becomes the SQL Server administrator.')
+@description('Display name of the managed identity that becomes the SQL Server administrator.')
 param sqlAdminLogin string
-
-@description('Microsoft Entra principal type of the SQL Server administrator.')
-@allowed([
-  'Group'
-  'Application'
-  'User'
-])
-param sqlAdminPrincipalType string
 
 var suffix = '${workload}-${environment}-${location}'
 var sqlServerName = 'sql-${suffix}'
@@ -66,7 +58,7 @@ module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
       administratorType: 'ActiveDirectory'
       azureADOnlyAuthentication: true
       sid: sqlAdminObjectId
-      principalType: sqlAdminPrincipalType
+      principalType: 'Application'
       login: sqlAdminLogin
       tenantId: tenant().tenantId
     }

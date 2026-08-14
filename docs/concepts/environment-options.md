@@ -7,8 +7,8 @@ actually supports it.
 | Option | What you get | Best for | Limitations |
 |---|---|---|---|
 | **Dev Container** (Codespaces, or **VS Code: Dev Containers → Reopen in Container**) | Azure CLI, Bicep, .NET 8 SDK and the Bicep VS Code extension preinstalled via [`.devcontainer/devcontainer.json`](../../.devcontainer/devcontainer.json); Copilot Chat with the MCP servers in [`.vscode/mcp.json`](../../.vscode/mcp.json) | The full agentic workflow: writing agents/prompts/skills, `/plan`, `/fleet`, Bicep authoring, .NET 8 builds and deployment | The default container is not normally connected to the workload VNet |
-| **Local VS Code** (repo opened directly, dev container skipped) | Whatever is already on your machine — Azure CLI, Bicep, .NET SDK, Copilot Chat | Teams with an already-configured machine, or a host that is VPN/ExpressRoute/Bastion-connected to the workload VNet | You are responsible for installing and updating Azure CLI, Bicep and the .NET SDK yourself |
-| **Azure Cloud Shell** | Browser-based Bash with Azure CLI, Bicep and the .NET SDK preinstalled, no local install | Quick `az` / Bicep commands, what-if, deploy, `dotnet build`/`publish`, and verification, especially for native Windows users | No Copilot Chat/agents — write agents, prompts and Bicep in a devcontainer or local VS Code first, then paste the resulting `az`/`dotnet`/`bash` commands into Cloud Shell; **not** normally connected to your workload VNet |
+| **Local VS Code** (repo opened directly, dev container skipped) | Whatever is already on your machine — Azure CLI, Bicep, .NET SDK, Copilot Chat | Teams with an already-configured machine | You are responsible for installing and updating Azure CLI, Bicep and the .NET SDK yourself |
+| **Azure Cloud Shell** | Browser-based Bash with Azure CLI, Bicep and the .NET SDK preinstalled, no local install | Quick `az` / Bicep commands, what-if, deploy, `dotnet build`/`publish`, and verification, especially for native Windows users | No Copilot Chat/agents — write agents, prompts and Bicep in a devcontainer or local VS Code first, then paste the resulting `az`/`dotnet`/`bash` commands into Cloud Shell |
 
 ## Where to run each kind of step
 
@@ -17,15 +17,14 @@ actually supports it.
 | Write/edit agents, prompts, skills; use Copilot Chat, `/plan`, `/fleet` | ✅ | ✅ (if Copilot Chat is configured locally) | ❌ no Copilot Chat |
 | `az login`, `az account show`, `az bicep build`, `./scripts/validate-infra.sh`, `az deployment ... what-if/create` | ✅ | ✅ | ✅ |
 | `dotnet build` / `dotnet publish` | ✅ .NET 8 SDK | ✅ if .NET 8 SDK is installed | ✅ preinstalled |
-| `az webapp deploy` (publish the app) | ✅ | ✅ | ✅ |
-| `./scripts/bootstrap-ticketing-database.sh` (must resolve the SQL private endpoint) | ⚠️ only if the container/Codespace is network-joined to the workload VNet (not the default) | ✅ if the machine is VPN/ExpressRoute/Bastion-connected to the VNet | ❌ not normally VNet-connected |
-| Bootstrap from the deployed private VM | Copy the script from here into the Bastion browser session | Copy the script from here into the Bastion browser session | Copy the script from here into the Bastion browser session |
+| `az webapp deploy` (publish the app) or trigger the [`app-deploy` workflow](../../.github/workflows/app-deploy.yml) | ✅ | ✅ | ✅ |
+| Database bootstrap | ✅ fully automated — runs as part of `az deployment sub create`, no manual step from any environment | | |
 
-Whenever a guide says "run this from a host connected to the workload VNet", none of the three
-default options satisfy that out of the box. The shared baseline deploys a private `Standard_B1s`
-bootstrap VM and Azure Bastion Developer specifically for this task. Connect through the Azure
-portal, paste the script from your checkout into the browser-based SSH session, and run it there.
-Never enable public SQL access to work around this boundary.
+The database bootstrap no longer needs a host connected to the workload VNet: it runs inside a
+VNet-integrated `Microsoft.Resources/deploymentScripts` container as part of the Bicep deployment
+itself, authenticated with a managed identity. There is no VM, Bastion session or Key Vault secret
+to manage from any of the three environments above. Never enable public SQL access to work around
+network boundaries.
 
 Every track guide links back to this page instead of repeating environment caveats inline — if a
 step doesn't specify where to run it, any option in the "✅" columns above is fine.

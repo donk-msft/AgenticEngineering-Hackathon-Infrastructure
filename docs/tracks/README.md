@@ -27,26 +27,21 @@ Work in a fork owned by your team and deploy to your own subscription. Before cr
 
 1. In `infra/main.bicepparam`, choose a unique `workload` or `environment` token and your SRE-Agent
    region. This produces unique CAF resource names.
-2. Replace the sample SQL administrator object ID and login with a Microsoft Entra group or user in
-   your tenant. The group/user must be able to sign in to Azure SQL for the one-time bootstrap.
-3. Set `bootstrapVmSshPublicKey` to your SSH public key. Generate one if needed with
-   `ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap`; keep the matching private key outside the
-   repository and upload it to the deployment Key Vault as a secret before opening the VM through
-   Bastion.
-4. Confirm the signed-in subscription is yours: `az account show -o table`.
-5. Decide where each action runs. All three supported options — dev container/Codespaces, local
+2. Confirm the signed-in subscription is yours: `az account show -o table`. The SQL Server
+   administrator and the database bootstrap are fully automated: a deployment-script managed
+   identity becomes the sole Entra SQL admin and creates the application login and `Tickets` table
+   for you.
+3. Decide where each action runs. All three supported options — dev container/Codespaces, local
    VS Code, and Azure Cloud Shell — are detailed in
    [Execution Environments](../concepts/environment-options.md):
 
-| Action | Dev container/Codespaces, local VS Code, Cloud Shell or Copilot CLI | Private-network-connected host |
-|---|---|---|
-| Validate, what-if, deploy Bicep and publish the app | ✅ | ✅ |
-| Copy and run `bootstrap-ticketing-database.sh` | Copy to the deployed bootstrap VM through Bastion | ✅ The deployed bootstrap VM |
-| Verify public app routes | ✅ | ✅ |
+| Action | Dev container/Codespaces, local VS Code, Cloud Shell or Copilot CLI |
+|---|---|
+| Validate, what-if, deploy Bicep and publish the app | ✅ |
+| Verify public app routes | ✅ |
 
-Cloud Shell is not normally connected to your workload VNet, so it cannot resolve the SQL private
-endpoint. Use the private bootstrap VM deployed with the baseline through Azure Bastion Developer;
-do not enable SQL public access to work around this boundary.
+The database bootstrap runs automatically inside the workload VNet as part of the infra deployment
+— no VM, Bastion or Key Vault step, and no need for a private-network-connected host.
 
 Teams starting directly at expert deploy the reference baseline in one command:
 
@@ -58,7 +53,8 @@ az deployment sub create \
   --parameters infra/main.bicepparam
 ```
 
-…then deploy the shared application onto it:
+…then deploy the shared application onto it, either through the
+[`app-deploy` GitHub Actions workflow](../../.github/workflows/app-deploy.yml) or:
 
 ```bash
 dotnet publish src/ContosoTicketing -c Release -o /tmp/publish
@@ -67,12 +63,8 @@ az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
   --name app-ticketing-dev-swedencentral --src-path /tmp/app.zip --type zip
 ```
 
-Finally, open the deployed Key Vault in the same resource group, upload the matching private key as
-`bootstrap-vm-ssh-private-key`, then open `vm-bootstrap-...` through Azure Bastion Developer and
-select **SSH Private Key from Azure Key Vault**. Paste the script from your checkout into `nano`,
-then run `~/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline` as the configured
-Entra SQL administrator. The expected end state is `/healthz`, `/readyz` and `/api/tickets`
-returning `200`, with SQL still private.
+The expected end state is `/healthz`, `/readyz` and `/api/tickets` returning `200`, with SQL still
+private.
 
 ## Scoring
 

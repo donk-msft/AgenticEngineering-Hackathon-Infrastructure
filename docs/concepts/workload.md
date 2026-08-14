@@ -25,21 +25,21 @@ flowchart TB
             subgraph snetpe["snet-privateendpoints · 10.10.2.0/24 · nsg-pep-dev-swedencentral"]
                 pep["pep-sql-ticketing-dev-swedencentral"]
             end
-                subgraph snetbootstrap["snet-bootstrap · 10.10.3.0/24 · nsg-bootstrap-dev-swedencentral"]
-                    vm["vm-bootstrap-ticketing-dev-swedencentral<br/>Linux Standard_B1s · no public IP"]
-                end
+            subgraph snetds["snet-deployscript · 10.10.3.0/24 · nsg-deployscript-dev-swedencentral"]
+                bootstrap["deploymentScript container<br/>AzureCLI · managed identity"]
             end
-            bastion["bas-ticketing-dev-swedencentral<br/>Azure Bastion Developer"]
+        end
         sql["sql-ticketing-dev-swedencentral<br/>publicNetworkAccess: Disabled<br/>Entra-only authentication"]
         dns["privatelink.database.windows.net"]
         law["log-ticketing-dev-swedencentral<br/>appi-ticketing-dev-swedencentral"]
+        identity["id-dbbootstrap-ticketing-dev-swedencentral<br/>sole Entra SQL admin"]
     end
     app -->|regional VNet integration| pep
     pep --> sql
     pep -.-> dns
     app --> law
-    bastion -->|SSH over TLS| vm
-    vm -->|private DNS + Entra auth| pep
+    bootstrap -->|private DNS + Entra managed identity auth| pep
+    identity -.->|Entra admin| sql
 ```
 
 ## Required Resources
@@ -50,11 +50,10 @@ flowchart TB
 | Virtual network | `vnet-<workload>-<env>-<region>` | `10.10.0.0/16` |
 | App subnet | `snet-app` | `10.10.1.0/24`, delegated to `Microsoft.Web/serverFarms` |
 | Private endpoint subnet | `snet-privateendpoints` | `10.10.2.0/24` |
-| Bootstrap subnet | `snet-bootstrap` | `10.10.3.0/24`, private bootstrap VM only |
-| NSGs | `nsg-app-<env>-<region>`, `nsg-pep-<env>-<region>` | Explicit deny-all inbound at priority 4096 |
-| Bootstrap VM NSG | `nsg-bootstrap-<env>-<region>` | Allow SSH from the virtual network, then deny all inbound |
-| Bootstrap VM | `vm-bootstrap-<workload>-<env>-<region>` | Ubuntu 22.04, `Standard_B1s`, SSH key authentication, no public IP |
-| Azure Bastion Developer | `bas-<workload>-<env>-<region>` | Free, development/test-only browser SSH to the bootstrap VM |
+| Deployment script subnet | `snet-deployscript` | `10.10.3.0/24`, delegated to `Microsoft.ContainerInstance/containerGroups` |
+| NSGs | `nsg-app-<env>-<region>`, `nsg-pep-<env>-<region>`, `nsg-deployscript-<env>-<region>` | Explicit deny-all inbound at priority 4096 |
+| Database bootstrap identity | `id-dbbootstrap-<workload>-<env>-<region>` | User-assigned managed identity, sole Microsoft Entra SQL administrator |
+| Database bootstrap script | `Microsoft.Resources/deploymentScripts` (AzureCLI) | VNet-integrated, creates the app's contained DB user and `Tickets` table |
 | App Service plan | `asp-<workload>-<env>-<region>` | Linux, PremiumV3 |
 | Web app | `app-<workload>-<env>-<region>` | HTTPS only, TLS 1.2+, FTPS disabled, health check `/healthz` |
 | SQL Server | `sql-<workload>-<env>-<region>` | Public access disabled, Entra-only auth |
@@ -112,8 +111,8 @@ Verify each of these against the **live** deployment, not against the template.
 - [ ] The SQL private endpoint connection state is `Approved`
 - [ ] `nslookup <sqlserver>.database.windows.net` from the app resolves to a `10.10.2.x` address
 - [ ] All subnets have an NSG attached, each with a deny-all inbound rule
-- [ ] The bootstrap VM has no public IP, accepts SSH only from the virtual network, and uses SSH key authentication
-- [ ] Azure Bastion Developer is deployed and can open an SSH session to the bootstrap VM
+- [ ] The database bootstrap managed identity is the sole Microsoft Entra SQL administrator, and the
+  deployment script has no public IP and runs only inside the workload VNet
 - [ ] The web app has a system-assigned identity and no password or connection secret in app settings
 - [ ] `az webapp show --query httpsOnly` returns `true` and `minTlsVersion` is `1.2` or higher
 - [ ] Application Insights receives telemetry and is workspace-based
