@@ -1,12 +1,14 @@
 # Expert Lab 7 — Close the Loop
 
 **Time**: 45 min · **Prerequisite**: Labs [1](lab-01-lifecycle.md), [2](lab-02-desired-state.md),
-[3](lab-03-sre-agent.md), [4](lab-04-incident-handover.md), [5](lab-05-ghas.md) and
-[6](lab-06-defender.md)
+[3](lab-03-sre-agent.md) and [4](lab-04-incident-handover.md) · **Optional prerequisite**: Labs
+[5](lab-05-ghas.md) and [6](lab-06-defender.md) if your team ran them
 
-You now have a pipeline that builds the workload and two systems that watch it. This lab connects
-them, so operational and security signals become **agent work items** rather than a dashboard
-nobody opens.
+You now have a pipeline that builds the workload and at least one system that watches it (the
+Azure SRE Agent from Labs 3–4; GHAS and Defender from the optional Labs 5–6 if you ran them). This
+lab connects them, so operational and security signals become **agent work items** rather than a
+dashboard nobody opens. If you skipped Labs 5–6, complete this lab for the reliability lane only
+and record the security rows in the table below as "skipped — optional lab not run".
 
 ## Objective
 
@@ -42,6 +44,8 @@ implementation:
 | Dependabot | Vulnerable dependency | PR | Automated | PR review |
 
 Any row where the "handled by" column says *nobody* is a gap. Fix it or write down why it is acceptable.
+
+📄 See [example filled-in tables](../tracks/examples/expert/outputs/lab-07-feedback-loops.md) — including how to record a skipped optional lane — to check your own `docs/feedback-loops.md` against.
 
 ## 2. Add the missing agent (15 min)
 

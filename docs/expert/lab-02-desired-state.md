@@ -58,6 +58,8 @@ result is non-empty. Reuse the OIDC identity from [Lab 1](lab-01-lifecycle.md) (
 
 ✅ **Checkpoint**: your manual portal change produced a GitHub issue.
 
+📄 See [an example `what-if` drift diff and the resulting GitHub issue](../tracks/examples/expert/outputs/lab-02-drift-detection.md) to check your implementation against.
+
 ## 3. Prevent the worst drift with Azure Policy (15 min)
 
 Detection is day-2; prevention is better. Assign policies at the resource-group scope so the

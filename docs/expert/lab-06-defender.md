@@ -1,6 +1,11 @@
-# Expert Lab 6 — Microsoft Defender for Cloud and Code-to-Cloud
+# Expert Lab 6 — Microsoft Defender for Cloud and Code-to-Cloud (Optional)
 
 **Time**: 60 min · **Prerequisite**: [Lab 5 — GHAS on the IaC repo](lab-05-ghas.md)
+
+> 🟡 **Optional lab.** This lab enables billed Defender for Cloud plans and needs
+> `User Access Administrator` (or equivalent) plus your team's approval to spend budget on them. If
+> your team lacks that permission/budget, skip to [Lab 7](lab-07-close-the-loop.md) and note the
+> security lane as skipped in `docs/feedback-loops.md`.
 
 This lab is **self-contained**: the Defender plans, the GitHub connector and the deny policies are
 all things you author yourself in [`infra/`](../../infra/), following the module conventions already
@@ -70,6 +75,8 @@ Environment settings → your GitHub connector → Authorize** — the connector
 
 ✅ **Checkpoint**: **Defender for Cloud → DevOps security** lists your repository, and its GHAS
 findings appear as Azure security recommendations.
+
+📄 See [an example connector deployment and posture questionnaire](../tracks/examples/expert/outputs/lab-06-defender-connector.md) to check your implementation against.
 
 ## 3. Read your posture (10 min)
 

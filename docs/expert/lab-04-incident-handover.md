@@ -196,6 +196,8 @@ production-connected agent or workload from Labs 3–4.
 If the tenant cannot provide this isolated sandbox, skip this comparison and record that the approval
 gate remains mandatory for the workload.
 
+📄 See [an example structured incident handover issue](../tracks/examples/expert/handovers/sre-incident-issue.md) to check your own handover's shape against.
+
 ---
 
 ## Definition of Done
@@ -210,4 +212,4 @@ gate remains mandatory for the workload.
 - [ ] Optional: Automatic/Autonomous mode was tested only in an isolated, handover-only plan and
       then reverted to Review
 
-➡️ Next: [Lab 5 — GHAS on the IaC repo](lab-05-ghas.md)
+➡️ Next: [Lab 5 — GHAS on the IaC repo](lab-05-ghas.md) *(optional — or skip to [Lab 7](lab-07-close-the-loop.md))*

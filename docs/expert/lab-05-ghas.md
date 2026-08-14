@@ -1,6 +1,11 @@
-# Expert Lab 5 — GitHub Advanced Security on the IaC Repo
+# Expert Lab 5 — GitHub Advanced Security on the IaC Repo (Optional)
 
 **Time**: 60 min · **Prerequisite**: [Lab 1 — Lifecycle hardening](lab-01-lifecycle.md)
+
+> 🟡 **Optional lab.** This lab requires a GHAS-enabled (Enterprise/GitHub Advanced Security)
+> repository, which is a paid GitHub entitlement not included with this hackathon. If your fork
+> does not have GHAS available, skip to [Lab 7](lab-07-close-the-loop.md) and note the security
+> lane as skipped in `docs/feedback-loops.md`.
 
 This lab is **self-contained**: every setting is either a documented GitHub click-path or a `gh` CLI
 command you can run from this repository. No other repository needs to exist.
@@ -75,6 +80,8 @@ value, and open a PR. CodeQL must raise **CWE-89, SQL injection** at `security-s
 
 ✅ **Checkpoint**: the PR is blocked by a failing CodeQL check.
 
+📄 See [an example of the CodeQL alert and the failing/passing gate](../tracks/examples/expert/outputs/lab-05-codeql-gate.md) to check your implementation against.
+
 Now fix it **with the tooling** — assign the CodeQL alert to Copilot and review its PR rather than
 reverting by hand. Keep the branch: [Lab 6](lab-06-defender.md) traces this same finding to the running resources.
 
@@ -111,4 +118,4 @@ Extend the branch protection from [Lab 1](lab-01-lifecycle.md) on `main`
 - [ ] A pushed secret was **blocked** — demonstrated
 - [ ] `main` requires both CodeQL and `infra-ci`
 
-➡️ Next: [Lab 6 — Defender for Cloud & code-to-cloud](lab-06-defender.md)
+➡️ Next: [Lab 6 — Defender for Cloud & code-to-cloud](lab-06-defender.md) *(optional — or skip to [Lab 7](lab-07-close-the-loop.md))*
