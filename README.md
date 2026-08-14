@@ -79,15 +79,16 @@ See [`docs/concepts/workload.md`](docs/concepts/workload.md) for the full specif
 These are **planning ranges**, not a quote: prices vary by region, agreement, usage and telemetry
 volume. They assume the supplied `swedencentral` baseline runs for 24 consecutive hours: one
 always-on Linux P0v3 App Service plan, a 0.5-vCore minimum General Purpose serverless SQL database,
-private networking, a burstable Standard_B1s bootstrap VM, free Azure Bastion Developer, and
-low-volume Azure Monitor ingestion. The database can pause after 60 minutes of inactivity, but the
-App Service plan cannot.
+private networking (private endpoint and private DNS zone), and low-volume Azure Monitor ingestion.
+The database can pause after 60 minutes of inactivity, but the App Service plan cannot. The database
+bootstrap runs as a short-lived VNet-integrated deployment script (a container instance plus a small
+Standard_LRS storage account), which costs cents per deployment rather than per day.
 
 | Track | Estimated Azure cost / 24 h | Assumption |
 |---|---:|---|
-| 🟢 Beginner | **€5–€9** | Shared baseline, including bootstrap VM |
-| 🟡 Intermediate | **€5–€9** | Same shared baseline |
-| 🔴 Expert | **€7–€14** | Baseline plus the Defender plans used in Lab 6 |
+| 🟢 Beginner | **€4–€8** | Shared baseline |
+| 🟡 Intermediate | **€4–€8** | Same shared baseline |
+| 🔴 Expert | **€6–€13** | Baseline plus the Defender plans used in Lab 6 |
 
 GHAS licensing is a GitHub entitlement and is **not** included. Alerting, Application Insights
 ingestion, availability tests and Defender can increase the total. Before deploying, price your
