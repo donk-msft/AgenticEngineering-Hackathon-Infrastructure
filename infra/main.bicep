@@ -30,26 +30,6 @@ param owner string = 'hackathon-team'
 @description('Cost centre tag value.')
 param costCenter string = 'hackathon'
 
-@description('Microsoft Entra object id that becomes the SQL Server Entra administrator.')
-param sqlAdminObjectId string
-
-@description('Display name of the Microsoft Entra principal that becomes the SQL Server administrator.')
-param sqlAdminLogin string
-
-@description('Microsoft Entra principal type of the SQL Server administrator.')
-@allowed([
-  'Group'
-  'Application'
-  'User'
-])
-param sqlAdminPrincipalType string = 'User'
-
-@description('Linux administrator username for the private bootstrap VM.')
-param bootstrapVmAdminUsername string = 'azureuser'
-
-@description('SSH public key for the private bootstrap VM administrator.')
-param bootstrapVmSshPublicKey string
-
 var regionToken = location
 var resourceGroupName = 'rg-${workload}-${environment}-${regionToken}'
 
@@ -90,6 +70,17 @@ module networking 'modules/networking.bicep' = {
   }
 }
 
+module identityBootstrap 'modules/identity-bootstrap.bicep' = {
+  scope: rg
+  name: 'identity-bootstrap'
+  params: {
+    workload: workload
+    environment: environment
+    location: location
+    tags: tags
+  }
+}
+
 module database 'modules/database.bicep' = {
   scope: rg
   name: 'database'
@@ -100,36 +91,8 @@ module database 'modules/database.bicep' = {
     tags: tags
     privateEndpointSubnetId: networking.outputs.privateEndpointSubnetId
     virtualNetworkId: networking.outputs.virtualNetworkId
-    sqlAdminObjectId: sqlAdminObjectId
-    sqlAdminLogin: sqlAdminLogin
-    sqlAdminPrincipalType: sqlAdminPrincipalType
-  }
-}
-
-module bootstrapKeyVault 'modules/bootstrap-keyvault.bicep' = {
-  scope: rg
-  name: 'bootstrap-keyvault'
-  params: {
-    workload: workload
-    environment: environment
-    location: location
-    tags: tags
-  }
-}
-
-module bootstrapVm 'modules/bootstrap-vm.bicep' = {
-  scope: rg
-  name: 'bootstrap-vm'
-  params: {
-    workload: workload
-    environment: environment
-    location: location
-    tags: tags
-    bootstrapSubnetId: networking.outputs.bootstrapSubnetId
-    virtualNetworkId: networking.outputs.virtualNetworkId
-    logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
-    adminUsername: bootstrapVmAdminUsername
-    adminSshPublicKey: bootstrapVmSshPublicKey
+    sqlAdminObjectId: identityBootstrap.outputs.principalId
+    sqlAdminLogin: identityBootstrap.outputs.name
   }
 }
 
@@ -144,6 +107,24 @@ module webapp 'modules/webapp.bicep' = {
     appSubnetId: networking.outputs.appSubnetId
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
     sqlConnectionString: database.outputs.connectionString
+  }
+}
+
+module databaseBootstrap 'modules/database-bootstrap.bicep' = {
+  scope: rg
+  name: 'database-bootstrap'
+  params: {
+    workload: workload
+    environment: environment
+    location: location
+    tags: tags
+    deployScriptSubnetId: networking.outputs.deployScriptSubnetId
+    managedIdentityResourceId: identityBootstrap.outputs.resourceId
+    managedIdentityPrincipalId: identityBootstrap.outputs.principalId
+    managedIdentityClientId: identityBootstrap.outputs.clientId
+    sqlServerName: database.outputs.sqlServerName
+    databaseName: database.outputs.databaseName
+    webAppName: webapp.outputs.webAppName
   }
 }
 
@@ -170,10 +151,4 @@ output sqlServerName string = database.outputs.sqlServerName
 output databaseName string = database.outputs.databaseName
 output logAnalyticsWorkspaceId string = monitoring.outputs.logAnalyticsWorkspaceId
 output applicationInsightsName string = monitoring.outputs.applicationInsightsName
-output bootstrapKeyVaultName string = bootstrapKeyVault.outputs.name
-output bootstrapKeyVaultResourceId string = bootstrapKeyVault.outputs.resourceId
-output bootstrapVmName string = bootstrapVm.outputs.bootstrapVmName
-output bootstrapVmResourceId string = bootstrapVm.outputs.bootstrapVmResourceId
-output bootstrapVmAdminUsername string = bootstrapVm.outputs.bootstrapVmAdminUsername
-output bastionName string = bootstrapVm.outputs.bastionName
-output bastionResourceId string = bootstrapVm.outputs.bastionResourceId
+output databaseBootstrapIdentityName string = identityBootstrap.outputs.name

@@ -23,7 +23,8 @@ az deployment sub create \
   --parameters infra/main.bicepparam
 ```
 
-Then deploy the application, which Labs 3–6 alert on, break and scan:
+Then deploy the application, which Labs 3–6 alert on, break and scan. Publish with the
+[`app-deploy` GitHub Actions workflow](../../.github/workflows/app-deploy.yml) or:
 
 ```bash
 dotnet publish src/ContosoTicketing -c Release -o /tmp/publish
@@ -32,26 +33,14 @@ az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
   --name app-ticketing-dev-swedencentral --src-path /tmp/app.zip --type zip
 ```
 
-Then open the resource group's Key Vault, upload the matching private key as
-`bootstrap-vm-ssh-private-key`, and open the deployed private `vm-bootstrap-...` through Azure
-Bastion Developer. In its browser SSH session, sign in as the username `azureuser` (the value
-of `bootstrapVmAdminUsername` in `infra/main.bicepparam`, `azureuser` unless you changed it),
-select **SSH Private Key from Azure Key Vault** and the `bootstrap-vm-ssh-private-key` secret, then
-paste [`scripts/bootstrap-ticketing-database.sh`](../../scripts/bootstrap-ticketing-database.sh)
-from your checkout into `nano`, run `chmod 700 ~/bootstrap-ticketing-database.sh`, and run the
-one-time bootstrap as the configured Microsoft Entra SQL administrator:
-
-```bash
-~/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
-```
-
-The VM is private, uses SSH key authentication through a Key Vault-backed private key secret, and has
-Azure CLI and `sqlcmd` preinstalled. Azure Bastion Developer supports browser copy/paste but not
-file transfer; the full procedure is in the [operations runbook](../operations-runbook.md#bootstrap-sql-access).
-The key is not stored in source control or embedded in a deployment parameter. The starting state is
-ready only when `/healthz`, `/readyz` and `/api/tickets` return `200`, Application Insights receives
-telemetry, and the SQL server remains private. Use the [roll-up checklist](../concepts/rollup-checklist.md)
-to record the resource names and prove this same state before starting either lane.
+The database bootstrap runs automatically as part of the infra deployment: a VNet-integrated
+`Microsoft.Resources/deploymentScripts` container, running as the sole Microsoft Entra SQL
+administrator, creates the App Service's contained database user, grants `db_datareader`, and
+creates `dbo.Tickets`. There is no VM, Bastion session or Key Vault secret to manage. The starting
+state is ready only when `/healthz`, `/readyz` and `/api/tickets` return `200`, Application Insights
+receives telemetry, and the SQL server remains private. Use the
+[roll-up checklist](../concepts/rollup-checklist.md) to record the resource names and prove this
+same state before starting either lane.
 
 > 🌍 Deploy in `swedencentral`, `eastus2` or `australiaeast` — the Azure SRE Agent is not available everywhere.
 

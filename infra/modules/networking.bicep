@@ -24,8 +24,8 @@ param appSubnetPrefix string = '10.10.1.0/24'
 @description('Address prefix of the private endpoint subnet.')
 param privateEndpointSubnetPrefix string = '10.10.2.0/24'
 
-@description('Address prefix of the private bootstrap VM subnet.')
-param bootstrapSubnetPrefix string = '10.10.3.0/24'
+@description('Address prefix of the deployment script subnet (delegated to Microsoft.ContainerInstance/containerGroups).')
+param deployScriptSubnetPrefix string = '10.10.3.0/24'
 
 var suffix = '${workload}-${environment}-${location}'
 
@@ -102,10 +102,10 @@ module privateEndpointNsg 'br/public:avm/res/network/network-security-group:0.5.
   }
 }
 
-module bootstrapNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
-  name: 'nsg-bootstrap-${suffix}'
+module deployScriptNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
+  name: 'nsg-deployscript-${suffix}'
   params: {
-    name: 'nsg-bootstrap-${environment}-${location}'
+    name: 'nsg-deployscript-${environment}-${location}'
     location: location
     tags: tags
     diagnosticSettings: [
@@ -115,19 +115,6 @@ module bootstrapNsg 'br/public:avm/res/network/network-security-group:0.5.3' = {
       }
     ]
     securityRules: [
-      {
-        name: 'AllowSshFromVirtualNetwork'
-        properties: {
-          priority: 100
-          direction: 'Inbound'
-          access: 'Allow'
-          protocol: 'Tcp'
-          sourceAddressPrefix: 'VirtualNetwork'
-          sourcePortRange: '*'
-          destinationAddressPrefix: '*'
-          destinationPortRange: '22'
-        }
-      }
       {
         name: 'DenyAllInbound'
         properties: {
@@ -167,9 +154,13 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
         networkSecurityGroupResourceId: privateEndpointNsg.outputs.resourceId
       }
       {
-        name: 'snet-bootstrap'
-        addressPrefix: bootstrapSubnetPrefix
-        networkSecurityGroupResourceId: bootstrapNsg.outputs.resourceId
+        name: 'snet-deployscript'
+        addressPrefix: deployScriptSubnetPrefix
+        networkSecurityGroupResourceId: deployScriptNsg.outputs.resourceId
+        delegation: 'Microsoft.ContainerInstance/containerGroups'
+        serviceEndpoints: [
+          'Microsoft.Storage'
+        ]
       }
     ]
   }
@@ -178,4 +169,4 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
 output virtualNetworkId string = virtualNetwork.outputs.resourceId
 output appSubnetId string = virtualNetwork.outputs.subnetResourceIds[0]
 output privateEndpointSubnetId string = virtualNetwork.outputs.subnetResourceIds[1]
-output bootstrapSubnetId string = virtualNetwork.outputs.subnetResourceIds[2]
+output deployScriptSubnetId string = virtualNetwork.outputs.subnetResourceIds[2]

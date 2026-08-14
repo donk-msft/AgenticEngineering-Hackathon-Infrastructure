@@ -1,0 +1,93 @@
+# Purpose: active repository automation. This workflow publishes the Contoso Ticketing app and
+# deploys it to the App Service provisioned by infra/main.bicep. Participant-safe workflow
+# patterns and agentic examples live under docs/tracks/examples/.
+#
+# Authentication uses OIDC federated credentials (no stored client secret), following the same
+# pattern documented for participants in docs/expert/lab-01-lifecycle.md. Configure these
+# repository variables before running this workflow:
+#   AZURE_CLIENT_ID       - app registration / user-assigned identity client id with a federated
+#                           credential for this repo (subject: repo:<owner>/<repo>:ref:refs/heads/main
+#                           for the push trigger, and repo:<owner>/<repo>:environment:<name> if you
+#                           gate this workflow behind a GitHub Environment)
+#   AZURE_TENANT_ID       - Microsoft Entra tenant id
+#   AZURE_SUBSCRIPTION_ID - subscription id containing the deployed resource group
+#
+# The identity behind AZURE_CLIENT_ID needs Contributor (or narrower Website Contributor) on the
+# target resource group to run `az webapp deploy`.
+
+name: app-deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      workload:
+        description: 'Workload name used in CAF resource names.'
+        required: true
+        default: 'ticketing'
+      environment_name:
+        description: 'Environment short name (dev, tst, prd).'
+        required: true
+        default: 'dev'
+      location:
+        description: 'Azure region used in CAF resource names.'
+        required: true
+        default: 'swedencentral'
+  push:
+    branches:
+      - main
+    paths:
+      - 'src/**'
+      - '.github/workflows/app-deploy.yml'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  publish-and-deploy:
+    name: Publish and deploy the Contoso Ticketing app
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment_name || 'dev' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Publish
+        run: dotnet publish src/ContosoTicketing -c Release -o ${{ runner.temp }}/publish
+
+      - name: Zip publish output
+        working-directory: ${{ runner.temp }}/publish
+        run: zip -r ${{ runner.temp }}/app.zip .
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Compute target resource names
+        id: names
+        run: |
+          workload="${{ inputs.workload || 'ticketing' }}"
+          environment_name="${{ inputs.environment_name || 'dev' }}"
+          location="${{ inputs.location || 'swedencentral' }}"
+          echo "resource_group=rg-${workload}-${environment_name}-${location}" >> "$GITHUB_OUTPUT"
+          echo "webapp_name=app-${workload}-${environment_name}-${location}" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to App Service
+        run: |
+          az webapp deploy \
+            --resource-group "${{ steps.names.outputs.resource_group }}" \
+            --name "${{ steps.names.outputs.webapp_name }}" \
+            --src-path "${{ runner.temp }}/app.zip" \
+            --type zip
+
+      - name: Azure logout
+        if: always()
+        run: az logout

@@ -28,85 +28,36 @@ az deployment sub list \
 ## Bootstrap SQL access
 
 The Bicep deployment creates the SQL server, database, private endpoint, private DNS, and App
-Service managed identity. Azure Resource Manager cannot create the contained database user. The
-App Service identity also **cannot create its own SQL principal**: until an Entra SQL administrator
+Service managed identity. Azure Resource Manager cannot create the contained database user, and the
+App Service identity **cannot create its own SQL principal**: until an Entra SQL administrator
 creates that principal, the identity has no database authorization with which to execute `CREATE
-USER`. This bootstrap is a one-time data-plane trust establishment and must be performed by the
-configured Microsoft Entra SQL administrator.
+USER`. This is a one-time data-plane trust establishment.
 
-The baseline deploys a private, burstable `Standard_B1s` bootstrap VM with Azure Bastion Developer.
-It has no public IP address and cloud-init installs Azure CLI and Go-based `sqlcmd`. Use this VM
-for the bootstrap; it is connected to the workload VNet and can resolve the SQL private endpoint.
-
-Before deployment, set `bootstrapVmSshPublicKey` in `infra/main.bicepparam` to the contents of a
-new or existing SSH public key. Keep the matching private key outside source control and never put
-it in a template or a GitHub secret:
-
-```bash
-ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap
-```
-
-After the deployment completes, open the deployed Key Vault (`kv-...` from the subscription outputs),
-create or reuse a secret named `bootstrap-vm-ssh-private-key`, and upload the matching private key:
-
-```bash
-az keyvault secret set \
-  --vault-name <kv-name> \
-  --name bootstrap-vm-ssh-private-key \
-  --file ~/.ssh/ticketing-bootstrap
-```
-
-The operator who uploads the secret and then opens the VM via Bastion needs the vault permissions to
-write and read the secret. The usual pattern is:
-
-```bash
-# upload access
-az role assignment create \
-  --assignee <your-object-id> \
-  --role "Key Vault Secrets Officer" \
-  --scope "$(az keyvault show --name <kv-name> --query id -o tsv)"
-
-# read access for portal SSH selection
-az role assignment create \
-  --assignee <your-object-id> \
-  --role "Key Vault Secrets User" \
-  --scope "$(az keyvault show --name <kv-name> --query id -o tsv)"
-```
-
-Then find `vm-bootstrap-...` in the resource group, select **Connect** > **Bastion**, and choose
-**SSH Private Key from Azure Key Vault**. Sign in as the username `azureuser` (the value of
-`bootstrapVmAdminUsername` in `infra/main.bicepparam`, `azureuser` unless you changed it), and
-pick the `bootstrap-vm-ssh-private-key` secret; Bastion
-retrieves the private key from Key Vault at the moment of the SSH session. Azure Bastion Developer
-provides browser SSH and clipboard copy/paste, but not native-client file transfer. In the Bastion
-terminal, run `cloud-init status --wait`, then create `~/bootstrap-ticketing-database.sh` with
-`nano`, paste the contents of [`scripts/bootstrap-ticketing-database.sh`](../scripts/bootstrap-ticketing-database.sh)
-from your local checkout, save it, and make it executable.
-
-```bash
-cloud-init status --wait
-az --version
-sqlcmd --version
-chmod 700 ~/bootstrap-ticketing-database.sh
-az login
-az account show --query "{subscription:name, user:user.name, tenant:tenantId}" -o table
-
-~/bootstrap-ticketing-database.sh \
-  --deployment-name ticketing-baseline
-```
+The baseline automates it end to end. `infra/modules/identity-bootstrap.bicep` creates a
+user-assigned managed identity that is the **sole** Microsoft Entra SQL administrator (Azure SQL
+only supports one Entra admin principal natively), and `infra/modules/database-bootstrap.bicep`
+runs a `Microsoft.Resources/deploymentScripts` (AzureCLI kind) container, integrated into the
+workload VNet through the `snet-deployscript` subnet, using that identity. There is no VM, Bastion
+session, SSH key or Key Vault secret involved — the deployment script's container image runs
+[`scripts/bootstrap-ticketing-database-deploymentscript.sh`](../scripts/bootstrap-ticketing-database-deploymentscript.sh)
+automatically as part of `az deployment sub create`.
 
 The script:
 
-1. Reads the resource group, app, SQL server, and database from deployment outputs.
-2. Refuses to continue unless the SQL hostname resolves to an RFC 1918 private address.
-3. Uses `sqlcmd -G` and the signed-in Entra SQL administrator; it uses no SQL password.
-4. Idempotently creates the App Service identity as a contained user, grants `db_datareader`, and
+1. Reads the SQL server, database, web app, and managed identity client ID from environment
+   variables the Bicep module injects.
+2. Installs `go-sqlcmd` and authenticates with `--authentication-method=ActiveDirectoryManagedIdentity`
+   using the deployment script's own managed identity — no SQL password, no human sign-in.
+3. Idempotently creates the App Service identity as a contained user, grants `db_datareader`, and
    creates `dbo.Tickets`.
 
+Re-running `az deployment sub create` with the same parameters re-runs the deployment script
+idempotently (increment the module's `baseTime` parameter or delete the prior
+`Microsoft.Resources/deploymentScripts` resource to force a re-run if you change the script logic).
 Do not temporarily enable SQL public access. Do not put an administrator token, password, SQL
 connection secret, or generated access token in a workflow or repository variable.
 
-Verify the bootstrap from the same private host:
+Verify the bootstrap from anywhere with network access to the public app routes:
 
 ```bash
 web_app_host="$(az deployment sub show --name ticketing-baseline \
