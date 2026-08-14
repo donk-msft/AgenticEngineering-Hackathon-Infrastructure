@@ -64,6 +64,7 @@ module bootstrapVm 'br/public:avm/res/compute/virtual-machine:0.22.0' = {
     nicConfigurations: [
       {
         nicSuffix: '-nic-01'
+        enableAcceleratedNetworking: false
         ipConfigurations: [
           {
             name: 'ipconfig01'
