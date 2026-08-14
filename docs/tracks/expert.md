@@ -34,7 +34,9 @@ az webapp deploy --resource-group rg-ticketing-dev-swedencentral \
 
 Then open the resource group's Key Vault, upload the matching private key as
 `bootstrap-vm-ssh-private-key`, and open the deployed private `vm-bootstrap-...` through Azure
-Bastion Developer. In its browser SSH session, select **SSH Private Key from Azure Key Vault**,
+Bastion Developer. In its browser SSH session, sign in as the username `azureuser` (the value
+of `bootstrapVmAdminUsername` in `infra/main.bicepparam`, `azureuser` unless you changed it),
+select **SSH Private Key from Azure Key Vault** and the `bootstrap-vm-ssh-private-key` secret, then
 paste [`scripts/bootstrap-ticketing-database.sh`](../../scripts/bootstrap-ticketing-database.sh)
 from your checkout into `nano`, run `chmod 700 ~/bootstrap-ticketing-database.sh`, and run the
 one-time bootstrap as the configured Microsoft Entra SQL administrator:

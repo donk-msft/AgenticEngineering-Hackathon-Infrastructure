@@ -74,7 +74,9 @@ az role assignment create \
 ```
 
 Then find `vm-bootstrap-...` in the resource group, select **Connect** > **Bastion**, and choose
-**SSH Private Key from Azure Key Vault**. Pick the `bootstrap-vm-ssh-private-key` secret; Bastion
+**SSH Private Key from Azure Key Vault**. Sign in as the username `azureuser` (the value of
+`bootstrapVmAdminUsername` in `infra/main.bicepparam`, `azureuser` unless you changed it), and
+pick the `bootstrap-vm-ssh-private-key` secret; Bastion
 retrieves the private key from Key Vault at the moment of the SSH session. Azure Bastion Developer
 provides browser SSH and clipboard copy/paste, but not native-client file transfer. In the Bastion
 terminal, run `cloud-init status --wait`, then create `~/bootstrap-ticketing-database.sh` with
