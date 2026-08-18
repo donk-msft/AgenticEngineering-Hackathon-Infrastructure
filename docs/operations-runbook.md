@@ -52,6 +52,10 @@ The script:
 3. Idempotently creates the App Service identity as a contained user, grants `db_datareader`, and
    creates `dbo.Tickets`.
 
+The contained user is created with the App Service managed identity object ID (`SID` and `TYPE = E`)
+instead of requiring the SQL server identity to resolve the display name through Microsoft Entra.
+This avoids granting the SQL server identity the tenant-wide Directory Readers role.
+
 Re-running `az deployment sub create` with the same parameters re-runs the deployment script
 idempotently (increment the module's `baseTime` parameter or delete the prior
 `Microsoft.Resources/deploymentScripts` resource to force a re-run if you change the script logic).

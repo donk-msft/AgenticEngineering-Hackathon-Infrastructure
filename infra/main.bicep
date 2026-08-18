@@ -125,6 +125,7 @@ module databaseBootstrap 'modules/database-bootstrap.bicep' = {
     sqlServerName: database.outputs.sqlServerName
     databaseName: database.outputs.databaseName
     webAppName: webapp.outputs.webAppName
+    webAppPrincipalId: webapp.outputs.principalId
   }
 }
 
