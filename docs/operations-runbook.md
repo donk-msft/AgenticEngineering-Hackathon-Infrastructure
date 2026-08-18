@@ -46,9 +46,9 @@ The script:
 
 1. Reads the SQL server, database, web app, and managed identity client ID from environment
    variables the Bicep module injects.
-2. Installs `go-sqlcmd` and authenticates with
-   `--authentication-method=ActiveDirectoryManagedIdentity -U <managed-identity-client-id>` using
-   the deployment script's own managed identity — no SQL password, no human sign-in.
+2. Installs `go-sqlcmd`, verifies it is on `PATH`, and authenticates with
+   `-G --authentication-method=ActiveDirectoryManagedIdentity` using the deployment script's own
+   managed identity — no SQL password, no human sign-in.
 3. Idempotently creates the App Service identity as a contained user, grants `db_datareader`, and
    creates `dbo.Tickets`.
 

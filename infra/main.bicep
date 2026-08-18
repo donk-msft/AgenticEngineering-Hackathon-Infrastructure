@@ -10,7 +10,7 @@ expert track without redesigning the workload.
 
 @description('Workload name used in CAF resource names, e.g. rg-<workload>-<env>-<region>.')
 @minLength(3)
-@maxLength(12)
+@maxLength(13)
 param workload string = 'ticketing'
 
 @description('Environment short name.')

@@ -44,6 +44,14 @@ fi
 
 export PATH="/tmp/sqlcmd:${PATH}"
 
+if ! command -v sqlcmd >/dev/null 2>&1; then
+  echo "sqlcmd was not found in PATH after extraction. Listing /tmp/sqlcmd:" >&2
+  ls -la /tmp/sqlcmd >&2 || true
+  exit 1
+fi
+
+sqlcmd --version
+
 sql_host="${SQL_SERVER_NAME}.database.windows.net"
 app_principal="${WEB_APP_NAME}"
 app_principal_sid="0x${WEB_APP_PRINCIPAL_ID//-/}"
@@ -78,7 +86,7 @@ EOF
 
 echo "Bootstrapping ${DATABASE_NAME} for managed identity ${app_principal}."
 sqlcmd -S "tcp:${sql_host},1433" -d "${DATABASE_NAME}" \
-  --authentication-method=ActiveDirectoryManagedIdentity -U "${MANAGED_IDENTITY_CLIENT_ID}" \
+  -G --authentication-method=ActiveDirectoryManagedIdentity -U "${MANAGED_IDENTITY_CLIENT_ID}" \
   -b -l 30 -Q "$sql"
 
 echo '{"result":"bootstrap completed"}' > "$AZ_SCRIPTS_OUTPUT_PATH"

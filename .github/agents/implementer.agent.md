@@ -34,6 +34,9 @@ You do not redesign, and you do not deploy to Azure.
 - System-assigned managed identity for Azure-to-Azure authentication.
 - Never write a password, key or connection secret into a template, parameter file or output.
 - NSGs include an explicit deny-all inbound rule.
+- Any `Microsoft.Resources/deploymentScripts` resource uses `cleanupPreference: 'OnExpiration'` with
+  `retentionInterval: 'P1D'` — never `OnSuccess` or `Always`, which can delete the container before
+  the script fully completes and destroy the logs you need to diagnose it.
 - Warnings are failures. The build must be clean.
 
 # Handover
