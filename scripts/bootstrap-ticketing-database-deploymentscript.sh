@@ -18,10 +18,25 @@ done
 
 echo "Installing go-sqlcmd..."
 sqlcmd_version="1.6.0"
-curl -fsSL -o /tmp/sqlcmd.tar.bz2 \
-  "https://github.com/microsoft/go-sqlcmd/releases/download/v${sqlcmd_version}/sqlcmd-linux-amd64.tar.bz2"
+sqlcmd_archive="/tmp/sqlcmd.tar.bz2"
+sqlcmd_url="https://github.com/microsoft/go-sqlcmd/releases/download/v${sqlcmd_version}/sqlcmd-v${sqlcmd_version}-linux-amd64.tar.bz2"
+
+curl --fail --location --silent --show-error --retry 3 --retry-delay 5 --output "${sqlcmd_archive}" "${sqlcmd_url}"
 mkdir -p /tmp/sqlcmd
-tar -xjf /tmp/sqlcmd.tar.bz2 -C /tmp/sqlcmd
+
+if command -v python3 >/dev/null 2>&1; then
+  python3 - <<'PY'
+import tarfile
+archive = "/tmp/sqlcmd.tar.bz2"
+output_dir = "/tmp/sqlcmd"
+with tarfile.open(archive, mode="r:bz2") as archive_file:
+    archive_file.extractall(output_dir)
+PY
+else
+  echo "python3 is required to extract the go-sqlcmd tarball." >&2
+  exit 1
+fi
+
 export PATH="/tmp/sqlcmd:${PATH}"
 
 sql_host="${SQL_SERVER_NAME}.database.windows.net"
