@@ -96,6 +96,11 @@ The routes are not decoration: `/healthz` backs the App Service health check, an
   (`br/public:avm/res/<provider>/<resource>:<version>` — never `latest`). The reference
   implementation in [`infra/`](../../infra/) does this; use it as the interface reference.
 
+- The database bootstrap `Microsoft.Resources/deploymentScripts` resource sets
+  `cleanupPreference: 'OnExpiration'` with `retentionInterval: 'P1D'`. `OnSuccess` (and `Always`)
+  tears the container group and its storage down as soon as the run reports back, which can race the
+  script's own completion and leaves you with no logs to diagnose a failed bootstrap.
+
 > 💡 **Pinned versions**: AVM modules evolve. Pin the version you validated against and upgrade
 > deliberately — `latest` turns every redeploy into an unreviewed change, which is the opposite of
 > the desired-state discipline expert Lab 2 builds on.
@@ -113,6 +118,8 @@ Verify each of these against the **live** deployment, not against the template.
 - [ ] All subnets have an NSG attached, each with a deny-all inbound rule
 - [ ] The database bootstrap managed identity is the sole Microsoft Entra SQL administrator, and the
   deployment script has no public IP and runs only inside the workload VNet
+- [ ] The database bootstrap deployment script uses `cleanupPreference: OnExpiration` with
+  `retentionInterval: P1D`, so the container and its logs survive the run
 - [ ] The web app has a system-assigned identity and no password or connection secret in app settings
 - [ ] `az webapp show --query httpsOnly` returns `true` and `minTlsVersion` is `1.2` or higher
 - [ ] Application Insights receives telemetry and is workspace-based

@@ -127,7 +127,7 @@ module databaseBootstrapScript 'br/public:avm/res/resources/deployment-script:0.
       }
     ]
     retentionInterval: 'P1D'
-    cleanupPreference: 'OnSuccess'
+    cleanupPreference: 'OnExpiration'
     timeout: 'PT30M'
     runOnce: false
     baseTime: baseTime

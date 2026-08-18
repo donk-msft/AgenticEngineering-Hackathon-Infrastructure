@@ -31,6 +31,9 @@ workload at three levels of agentic maturity.
 - Azure authentication from GitHub Actions uses **OIDC federated credentials**, never a stored
   client secret.
 - NSGs use least privilege and include an explicit deny-all inbound rule.
+- Deployment scripts (`Microsoft.Resources/deploymentScripts`) use `cleanupPreference: OnExpiration`
+  with `retentionInterval: P1D` — `OnSuccess`/`Always` can delete the container before the script
+  completes and destroys its logs.
 - TLS 1.2 minimum, HTTPS only, FTPS disabled.
 - Application SQL access is parameterised — never concatenate input into SQL text. The SQL
   injection in [`docs/concepts/fault-and-vulnerability.md`](../docs/concepts/fault-and-vulnerability.md)
