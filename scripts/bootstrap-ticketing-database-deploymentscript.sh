@@ -9,12 +9,17 @@
 # the sole Microsoft Entra administrator on the SQL logical server.
 set -euo pipefail
 
-for var in SQL_SERVER_NAME DATABASE_NAME WEB_APP_NAME MANAGED_IDENTITY_CLIENT_ID; do
+for var in SQL_SERVER_NAME DATABASE_NAME WEB_APP_NAME WEB_APP_PRINCIPAL_ID MANAGED_IDENTITY_CLIENT_ID; do
   if [[ -z "${!var:-}" ]]; then
     echo "Required environment variable '${var}' was not set." >&2
     exit 1
   fi
 done
+
+if [[ ! "${WEB_APP_PRINCIPAL_ID}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+  echo "WEB_APP_PRINCIPAL_ID must be a Microsoft Entra object ID." >&2
+  exit 1
+fi
 
 echo "Installing go-sqlcmd..."
 sqlcmd_version="1.6.0"
@@ -41,11 +46,12 @@ export PATH="/tmp/sqlcmd:${PATH}"
 
 sql_host="${SQL_SERVER_NAME}.database.windows.net"
 app_principal="${WEB_APP_NAME}"
+app_principal_sid="0x${WEB_APP_PRINCIPAL_ID//-/}"
 
 sql=$(cat <<EOF
 IF DATABASE_PRINCIPAL_ID(N'${app_principal}') IS NULL
 BEGIN
-    CREATE USER [${app_principal}] FROM EXTERNAL PROVIDER;
+    CREATE USER [${app_principal}] WITH SID = ${app_principal_sid}, TYPE = E;
 END;
 
 IF NOT EXISTS (

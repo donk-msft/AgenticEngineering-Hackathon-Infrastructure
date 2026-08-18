@@ -33,6 +33,9 @@ param databaseName string
 @description('Web app name whose managed identity receives db_datareader access.')
 param webAppName string
 
+@description('Object id of the web app system-assigned managed identity.')
+param webAppPrincipalId string
+
 @description('Forces the deployment script to re-run on every deployment. Defaults to the current UTC timestamp.')
 param baseTime string = utcNow()
 
@@ -120,6 +123,10 @@ module databaseBootstrapScript 'br/public:avm/res/resources/deployment-script:0.
       {
         name: 'WEB_APP_NAME'
         value: webAppName
+      }
+      {
+        name: 'WEB_APP_PRINCIPAL_ID'
+        value: webAppPrincipalId
       }
       {
         name: 'MANAGED_IDENTITY_CLIENT_ID'
