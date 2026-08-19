@@ -1,4 +1,4 @@
-metadata description = 'Compute tier for the Contoso Ticketing workload: Linux App Service with a system-assigned identity and regional VNet integration, built from Azure Verified Modules.'
+metadata description = 'Compute tier for the Contoso Ticketing workload: Linux App Service with a user-assigned identity and regional VNet integration, built from Azure Verified Modules.'
 
 @description('Workload name used in CAF resource names.')
 param workload string
@@ -20,6 +20,15 @@ param applicationInsightsConnectionString string
 
 @description('Passwordless SQL connection string.')
 param sqlConnectionString string
+
+@description('Resource id of the user-assigned managed identity attached to the web app.')
+param appIdentityResourceId string
+
+@description('Principal id of the user-assigned managed identity attached to the web app.')
+param appIdentityPrincipalId string
+
+@description('Client id of the user-assigned managed identity attached to the web app.')
+param appIdentityClientId string
 
 var suffix = '${workload}-${environment}-${location}'
 
@@ -45,7 +54,10 @@ module webApp 'br/public:avm/res/web/site:0.24.0' = {
     kind: 'app,linux'
     serverFarmResourceId: appServicePlan.outputs.resourceId
     managedIdentities: {
-      systemAssigned: true
+      systemAssigned: false
+      userAssignedResourceIds: [
+        appIdentityResourceId
+      ]
     }
     httpsOnly: true
     virtualNetworkSubnetResourceId: appSubnetId
@@ -66,6 +78,7 @@ module webApp 'br/public:avm/res/web/site:0.24.0' = {
         properties: {
           APPLICATIONINSIGHTS_CONNECTION_STRING: applicationInsightsConnectionString
           ConnectionStrings__Default: sqlConnectionString
+          AZURE_CLIENT_ID: appIdentityClientId
           DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: '0'
         }
       }
@@ -75,4 +88,5 @@ module webApp 'br/public:avm/res/web/site:0.24.0' = {
 
 output webAppName string = webApp.outputs.name
 output defaultHostName string = webApp.outputs.defaultHostname
-output principalId string = webApp.outputs.?systemAssignedMIPrincipalId ?? ''
+output principalId string = appIdentityPrincipalId
+output clientId string = appIdentityClientId

@@ -81,6 +81,17 @@ module identityBootstrap 'modules/identity-bootstrap.bicep' = {
   }
 }
 
+module identityApp 'modules/identity-app.bicep' = {
+  scope: rg
+  name: 'identity-app'
+  params: {
+    workload: workload
+    environment: environment
+    location: location
+    tags: tags
+  }
+}
+
 module database 'modules/database.bicep' = {
   scope: rg
   name: 'database'
@@ -107,6 +118,9 @@ module webapp 'modules/webapp.bicep' = {
     appSubnetId: networking.outputs.appSubnetId
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
     sqlConnectionString: database.outputs.connectionString
+    appIdentityResourceId: identityApp.outputs.resourceId
+    appIdentityPrincipalId: identityApp.outputs.principalId
+    appIdentityClientId: identityApp.outputs.clientId
   }
 }
 
@@ -126,6 +140,7 @@ module databaseBootstrap 'modules/database-bootstrap.bicep' = {
     databaseName: database.outputs.databaseName
     webAppName: webapp.outputs.webAppName
     webAppPrincipalId: webapp.outputs.principalId
+    webAppClientId: identityApp.outputs.clientId
   }
 }
 

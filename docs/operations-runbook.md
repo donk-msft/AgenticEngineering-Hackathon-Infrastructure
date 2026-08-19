@@ -47,13 +47,14 @@ The script:
 1. Reads the SQL server, database, web app, and managed identity client ID from environment
    variables the Bicep module injects.
 2. Installs `go-sqlcmd`, verifies it is on `PATH`, and authenticates with
-   `-G --authentication-method=ActiveDirectoryManagedIdentity` using the deployment script's own
+   `--authentication-method=ActiveDirectoryManagedIdentity` using the deployment script's own
    managed identity — no SQL password, no human sign-in.
 3. Idempotently creates the App Service identity as a contained user, grants `db_datareader`, and
    creates `dbo.Tickets`.
 
-The contained user is created with the App Service managed identity object ID (`SID` and `TYPE = E`)
-instead of requiring the SQL server identity to resolve the display name through Microsoft Entra.
+The contained user is created with the App Service managed identity **application (client) ID**
+encoded as little-endian binary for `SID` (`TYPE = E`), instead of requiring the SQL server identity
+to resolve the display name through Microsoft Entra.
 This avoids granting the SQL server identity the tenant-wide Directory Readers role.
 
 Re-running `az deployment sub create` with the same parameters re-runs the deployment script

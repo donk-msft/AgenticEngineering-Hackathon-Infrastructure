@@ -9,7 +9,7 @@
 # the sole Microsoft Entra administrator on the SQL logical server.
 set -euo pipefail
 
-for var in SQL_SERVER_NAME DATABASE_NAME WEB_APP_NAME WEB_APP_PRINCIPAL_ID MANAGED_IDENTITY_CLIENT_ID; do
+for var in SQL_SERVER_NAME DATABASE_NAME WEB_APP_NAME WEB_APP_PRINCIPAL_ID WEB_APP_CLIENT_ID MANAGED_IDENTITY_CLIENT_ID; do
   if [[ -z "${!var:-}" ]]; then
     echo "Required environment variable '${var}' was not set." >&2
     exit 1
@@ -18,6 +18,11 @@ done
 
 if [[ ! "${WEB_APP_PRINCIPAL_ID}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
   echo "WEB_APP_PRINCIPAL_ID must be a Microsoft Entra object ID." >&2
+  exit 1
+fi
+
+if [[ ! "${WEB_APP_CLIENT_ID}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+  echo "WEB_APP_CLIENT_ID must be a Microsoft Entra application (client) ID." >&2
   exit 1
 fi
 
@@ -54,12 +59,26 @@ sqlcmd --version
 
 sql_host="${SQL_SERVER_NAME}.database.windows.net"
 app_principal="${WEB_APP_NAME}"
-app_principal_sid="0x${WEB_APP_PRINCIPAL_ID//-/}"
+app_principal_sid="$(python3 -c 'import sys, uuid; print(f"0x{uuid.UUID(sys.argv[1]).bytes_le.hex().upper()}")' "${WEB_APP_CLIENT_ID}")"
 
 sql=$(cat <<EOF
+DECLARE @ExpectedSid VARBINARY(16) = CONVERT(VARBINARY(16), ${app_principal_sid}, 1);
+
+IF DATABASE_PRINCIPAL_ID(N'${app_principal}') IS NOT NULL
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM sys.database_principals
+        WHERE name = N'${app_principal}' AND type = 'E' AND sid <> @ExpectedSid
+    )
+    BEGIN
+        DROP USER [${app_principal}];
+    END;
+END;
+
 IF DATABASE_PRINCIPAL_ID(N'${app_principal}') IS NULL
 BEGIN
-    CREATE USER [${app_principal}] WITH SID = ${app_principal_sid}, TYPE = E;
+    CREATE USER [${app_principal}] WITH SID = @ExpectedSid, TYPE = E;
 END;
 
 IF NOT EXISTS (
@@ -81,12 +100,16 @@ BEGIN
         Status NVARCHAR(50) NOT NULL
     );
 END;
+
+SELECT name, type_desc, CONVERT(varchar(100), sid, 1) AS sid_hex
+FROM sys.database_principals
+WHERE name = N'${app_principal}';
 EOF
 )
 
 echo "Bootstrapping ${DATABASE_NAME} for managed identity ${app_principal}."
 sqlcmd -S "tcp:${sql_host},1433" -d "${DATABASE_NAME}" \
-  -G --authentication-method=ActiveDirectoryManagedIdentity -U "${MANAGED_IDENTITY_CLIENT_ID}" \
+  --authentication-method=ActiveDirectoryManagedIdentity -U "${MANAGED_IDENTITY_CLIENT_ID}" \
   -b -l 30 -Q "$sql"
 
 echo '{"result":"bootstrap completed"}' > "$AZ_SCRIPTS_OUTPUT_PATH"
