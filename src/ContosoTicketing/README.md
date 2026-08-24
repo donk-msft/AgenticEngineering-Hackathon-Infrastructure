@@ -18,16 +18,14 @@ There are **no credentials in this app**. `ConnectionStrings__Default` is inject
 `infra/modules/webapp.bicep` and uses `Authentication=Active Directory Default`, so
 `Microsoft.Data.SqlClient` authenticates with the App Service system-assigned managed identity.
 
-After the infrastructure deployment, bootstrap the app identity, `db_datareader` grant and
-`dbo.Tickets` table with the idempotent script:
-
-```bash
-./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
-```
-
-Run it as the Microsoft Entra SQL administrator from a host that resolves the SQL server through
-its private endpoint. It uses `sqlcmd -G` (Azure CLI authentication); it neither requires nor
-creates a SQL password. Run it before deploying the app so `/readyz` is healthy end to end.
+The database bootstrap is **automatic**. `infra/modules/database-bootstrap.bicep` runs
+[`scripts/bootstrap-ticketing-database-deploymentscript.sh`](../../scripts/bootstrap-ticketing-database-deploymentscript.sh)
+inside a VNet-integrated `Microsoft.Resources/deploymentScripts` container during
+`az deployment sub create`, authenticating as the user-assigned managed identity that is the sole
+Microsoft Entra SQL administrator. It idempotently creates the App Service identity as a contained
+database user, grants `db_datareader` and creates `dbo.Tickets`. There is nothing to run by hand;
+re-run the infrastructure deployment to repeat it. See
+[the operations runbook](../../docs/operations-runbook.md#bootstrap-sql-access).
 
 ## Build, run and deploy
 
