@@ -114,21 +114,27 @@ resources, and holds no role above the workload resource group.
 
 ### Confirm the SQL data-plane bootstrap
 
-Before asking the agent to investigate readiness, complete the private-network bootstrap described
-in [`docs/operations-runbook.md`](../operations-runbook.md). Run it in **Bash with the Azure CLI**,
-from the **repository root**, on a host connected to the workload VNet, signed in as the configured
-Microsoft Entra SQL administrator. Pass the **subscription deployment name** used with
-`az deployment sub create --name`; this is how the script resolves the workload outputs:
+Before asking the agent to investigate readiness, confirm the SQL data-plane bootstrap described in
+[`docs/operations-runbook.md`](../operations-runbook.md) has run. It is automatic: the
+`Microsoft.Resources/deploymentScripts` container in
+[`infra/modules/database-bootstrap.bicep`](../../infra/modules/database-bootstrap.bicep) runs during
+`az deployment sub create`, from inside the workload VNet, as the user-assigned managed identity
+that is the sole Microsoft Entra SQL administrator. Verify it from any host with access to the
+public app routes:
 
 ```bash
-./scripts/bootstrap-ticketing-database.sh --deployment-name ticketing-baseline
+web_app_host="$(az deployment sub show --name ticketing-baseline \
+  --query properties.outputs.webAppHostName.value -o tsv)"
+
+curl --fail-with-body "https://${web_app_host}/readyz"
 ```
 
-Ordinary Cloud Shell and a default dev container cannot reach the SQL private endpoint — see
-[Execution Environments](../concepts/environment-options.md). The App Service managed identity
-cannot create its own contained database user: it has no SQL authorization until the administrator
-creates that principal. Never enable public SQL access or introduce a password to bypass this
-bootstrap.
+If `/readyz` does not return `200`, inspect the deployment script logs and re-run the
+infrastructure deployment — see
+[the operations runbook](../operations-runbook.md#bootstrap-sql-access). The App Service managed
+identity cannot create its own contained database user: it has no SQL authorization until the
+administrator principal creates it. Never enable public SQL access or introduce a password to
+bypass this bootstrap.
 
 ## 4. Give it signals (15 min)
 

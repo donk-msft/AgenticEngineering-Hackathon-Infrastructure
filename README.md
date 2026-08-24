@@ -42,18 +42,16 @@ flowchart TB
             subgraph snetpe["snet-privateendpoints 10.10.2.0/24 · nsg-pep"]
                 pep["Private Endpoint"]
             end
-            subgraph snetbootstrap["snet-bootstrap 10.10.3.0/24 · nsg-bootstrap"]
-                vm["Bootstrap VM<br/>Standard_B1s · no public IP"]
+            subgraph snetds["snet-deployscript 10.10.3.0/24 · nsg-deployscript"]
+                ds["Deployment script container<br/>user-assigned identity · no public IP"]
             end
         end
-        bastion["Azure Bastion Developer"]
         sql["Azure SQL<br/>publicNetworkAccess: Disabled<br/>Entra-only auth"]
         law["Log Analytics + App Insights"]
     end
     app -->|VNet integration| pep --> sql
     app --> law
-    bastion -->|browser SSH| vm
-    vm --> pep
+    ds -->|one-time database bootstrap| pep
 ```
 
 On top of it runs [`src/ContosoTicketing`](src/ContosoTicketing/) — a minimal .NET 8 API exposing
@@ -67,7 +65,7 @@ See [the fault and vulnerability contract](docs/concepts/fault-and-vulnerability
 - No public database access — Private Endpoint + private DNS only
 - Managed identity everywhere — **no passwords, no connection-string secrets**
 - NSGs with an explicit deny-all rule, TLS 1.2+, HTTPS only
-- A private burstable bootstrap VM with Azure Bastion Developer for the one-time private SQL bootstrap
+- A private, VNet-integrated deployment script container for the one-time private SQL bootstrap — no VM, Bastion or Key Vault secret
 - Diagnostics wired into Log Analytics
 
 See [`docs/concepts/workload.md`](docs/concepts/workload.md) for the full specification and acceptance criteria.
@@ -189,30 +187,16 @@ are in [Execution Environments](docs/concepts/environment-options.md):
 
 Then choose your track, open its guide, and execute the hackathon steps for that track.
 
-Before any deployment, edit `infra/main.bicepparam`: 
+Before any deployment, edit `infra/main.bicepparam`:
+
 - Choose a unique `workload` and `environment` token so your resource names cannot collide with another team
-- Replace the placeholder SQL administrator values with a Microsoft Entra group or user from **your** tenant. The supplied
-example uses the `sg-hackathon-sqladmins` group. Reuse that group if it already exists, or create
-it if your tenant permits group creation:
+- Set the `owner` and `costCenter` tag values for your team
+- Optionally change `location` — use `swedencentral`, `eastus2` or `australiaeast` if you intend to do the expert track
 
-```bash
-az ad group create \
-  --display-name "sg-hackathon-sqladmins" \
-  --mail-nickname "sg-hackathon-sqladmins"
-```
-
-Then retrieve the group's values and copy them into `sqlAdminObjectId` and `sqlAdminLogin`:
-
-```bash
-az ad group show --group "sg-hackathon-sqladmins" \
-  --query "{objectId:id, login:displayName}" -o table
-```
-
-- Generate an SSH key with `ssh-keygen -t ed25519 -f ~/.ssh/ticketing-bootstrap` and copy the
-  public-key contents into `bootstrapVmSshPublicKey`. Keep the matching private key outside source
-  control; after the baseline deploys, upload it to the resource group's Key Vault as the secret
-  `bootstrap-vm-ssh-private-key` and select that secret when you open the VM through Azure Bastion
-  Developer.
+There is nothing else to prepare: the Microsoft Entra SQL administrator is a user-assigned managed
+identity created by the deployment itself, and the database bootstrap runs automatically as a
+VNet-integrated deployment script. No SQL administrator group, password, SSH key or Key Vault
+secret is required — see [the operations runbook](docs/operations-runbook.md#bootstrap-sql-access).
 
 ---
 
@@ -263,10 +247,10 @@ dotnet build src/ContosoTicketing
 │   └── expert/                          # SRE Agent + GHAS/Defender labs (GHAS/Defender optional)
 ├── infra/                               # 📦 The shared Contoso Ticketing baseline
 │   ├── main.bicep · main.bicepparam
-│   └── modules/{networking,database,webapp,monitoring,alerts}.bicep
+│   └── modules/{networking,database,database-bootstrap,identity-app,identity-bootstrap,webapp,monitoring,alerts}.bicep
 ├── knowledge/                           # Azure SRE Agent architecture, runbook and escalation policy
 ├── src/ContosoTicketing/                # 📦 The shared .NET 8 application
-└── scripts/validate-infra.sh
+└── scripts/{validate-infra.sh, bootstrap-ticketing-database-deploymentscript.sh}
 ```
 
 ---

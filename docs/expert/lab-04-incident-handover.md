@@ -73,12 +73,13 @@ curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/read
 curl -s -o /dev/null -w '%{http_code}\n' https://<webapp>.azurewebsites.net/api/tickets  # expect 200
 ```
 
-If readiness has never returned `200`, do not inject a fault. Complete the private SQL bootstrap in
-[`docs/operations-runbook.md`](../operations-runbook.md), running
-[`./scripts/bootstrap-ticketing-database.sh`](../../scripts/bootstrap-ticketing-database.sh) from
-the **repository root** on a VNet-connected host, using the original subscription deployment name.
-The App Service managed identity cannot create its own SQL principal; the configured Entra SQL
-administrator must establish that initial data-plane authorization.
+If readiness has never returned `200`, do not inject a fault. Confirm the automatic private SQL
+bootstrap described in [`docs/operations-runbook.md`](../operations-runbook.md) succeeded — the
+VNet-integrated deployment script runs
+[`./scripts/bootstrap-ticketing-database-deploymentscript.sh`](../../scripts/bootstrap-ticketing-database-deploymentscript.sh)
+as part of `az deployment sub create`; re-run that deployment if it did not.
+The App Service managed identity cannot create its own SQL principal; the Entra SQL
+administrator identity must establish that initial data-plane authorization.
 
 Then inject exactly one of injections **A**, **B** or **C** from that document — a dropped database
 role membership, a deleted private DNS virtual network link, or a removed NSG rule. All three make
