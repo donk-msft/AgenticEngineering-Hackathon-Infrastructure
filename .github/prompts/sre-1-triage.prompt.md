@@ -1,5 +1,5 @@
 ---
-mode: agent
+agent: sre
 description: Triage a reliability, drift or security finding for the deployed workload (expert track).
 ---
 

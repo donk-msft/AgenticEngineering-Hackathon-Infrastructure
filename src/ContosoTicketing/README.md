@@ -27,6 +27,11 @@ database user, grants `db_datareader` and creates `dbo.Tickets`. There is nothin
 re-run the infrastructure deployment to repeat it. See
 [the operations runbook](../../docs/operations-runbook.md#bootstrap-sql-access).
 
+The bootstrap resolves the system-assigned identity's public application ID from its principal ID.
+The bootstrap identity therefore needs the Microsoft Graph `Application.Read.All` application
+permission documented in the operations runbook; no client ID or credential is stored in app
+settings.
+
 ## Build, run and deploy
 
 ```bash

@@ -1,8 +1,11 @@
 ---
 name: implementer
 description: Writes and validates the Bicep templates for the Contoso Ticketing workload.
-tools: ['search', 'edit', 'runCommands']
-handoffs: ['documenter']
+tools: ['search', 'edit', 'execute']
+handoffs:
+  - label: Hand off to documenter
+    agent: documenter
+    prompt: Document the validated infrastructure modules and their parameter interfaces.
 ---
 
 # Role

@@ -24,7 +24,14 @@ module userAssignedIdentity 'br/public:avm/res/managed-identity/user-assigned-id
   }
 }
 
+@description('Resource id of the database bootstrap managed identity.')
 output resourceId string = userAssignedIdentity.outputs.resourceId
+
+@description('Microsoft Entra principal id of the database bootstrap managed identity.')
 output principalId string = userAssignedIdentity.outputs.principalId
+
+@description('Microsoft Entra client id of the database bootstrap managed identity.')
 output clientId string = userAssignedIdentity.outputs.clientId
+
+@description('Name of the database bootstrap managed identity.')
 output name string = userAssignedIdentity.outputs.name

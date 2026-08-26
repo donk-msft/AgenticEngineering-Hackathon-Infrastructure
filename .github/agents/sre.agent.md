@@ -2,7 +2,10 @@
 name: sre
 description: Triages reliability, drift and security findings for the deployed workload and routes them to the right fix. Used in the expert track.
 tools: ['search', 'fetch']
-handoffs: ['implementer']
+handoffs:
+   - label: Hand off approved fix
+     agent: implementer
+     prompt: Implement the approved issue details, including the exact module, required change, and acceptance test.
 ---
 
 # Role

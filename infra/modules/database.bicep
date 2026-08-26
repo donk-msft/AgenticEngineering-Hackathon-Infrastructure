@@ -96,8 +96,17 @@ module sqlServer 'br/public:avm/res/sql/server:0.22.0' = {
   }
 }
 
+@description('Name of the Azure SQL logical server.')
 output sqlServerName string = sqlServer.outputs.name
+
+@description('Name of the Azure SQL database.')
 output databaseName string = databaseName
+
+@description('Name of the automatically approved SQL private endpoint.')
+output privateEndpointName string = 'pep-${sqlServerName}'
+
+@description('Name of the SQL private DNS zone linked to the workload virtual network.')
+output privateDnsZoneName string = 'privatelink${az.environment().suffixes.sqlServerHostname}'
 
 @description('Passwordless connection string. Authentication happens through the web app managed identity, so no secret is emitted.')
 output connectionString string = 'Server=tcp:${sqlServer.outputs.fullyQualifiedDomainName},1433;Database=${databaseName};Authentication=Active Directory Default;Encrypt=True;TrustServerCertificate=False;'

@@ -1,0 +1,7 @@
+{
+    "chat.mcp.serverSampling": {
+        "AgenticEngineering-Hackathon-Infrastructure/.vscode/mcp.json: azure": {
+            "allowedDuringChat": true
+        }
+    }
+}

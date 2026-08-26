@@ -1,0 +1,161 @@
+# Contoso Ticketing — Target Architecture
+
+> Design produced by `@architect` from the authoritative requirement document
+> [`docs/concepts/workload.md`](concepts/workload.md). This document is the input contract for
+> `@implementer`. Where this design fixes a decision, it is called out in the
+> [Handover](#handover-to-implementer) section and must not be revisited without a new architecture
+> change.
+
+An internal .NET 8 ticketing platform reachable over HTTPS, backed by an Azure SQL database that is
+never reachable from the internet, with enough telemetry to operate it in production. Everything is
+deployed with subscription-scoped Bicep composed exclusively from version-pinned Azure Verified
+Modules.
+
+## 1. Target architecture
+
+```mermaid
+flowchart TB
+    corp["Corporate network<br/>(HTTPS clients)"]
+
+    subgraph sub["Subscription (targetScope = subscription)"]
+        subgraph rg["rg-ticketing-dev-swedencentral"]
+            direction TB
+
+            subgraph vnet["vnet-ticketing-dev-swedencentral · 10.10.0.0/16"]
+                subgraph snetapp["snet-app · 10.10.1.0/24<br/>nsg-app-dev-swedencentral<br/>delegated: Microsoft.Web/serverFarms"]
+                    app["app-ticketing-dev-swedencentral<br/>App Service Linux · P0v3<br/>system-assigned + user-assigned identity<br/>HTTPS only · TLS 1.2 · FTPS off"]
+                end
+                subgraph snetpe["snet-privateendpoints · 10.10.2.0/24<br/>nsg-pep-dev-swedencentral"]
+                    pep["pep-sql-ticketing-dev-swedencentral"]
+                end
+                subgraph snetds["snet-deployscript · 10.10.3.0/24<br/>nsg-deployscript-dev-swedencentral<br/>delegated: Microsoft.ContainerInstance/containerGroups"]
+                    bootstrap["deploymentScript (AzureCLI)<br/>VNet-integrated · managed identity"]
+                end
+            end
+
+            asp["asp-ticketing-dev-swedencentral<br/>App Service plan · Linux P0v3"]
+            sql["sql-ticketing-dev-swedencentral<br/>publicNetworkAccess: Disabled<br/>Entra-only authentication"]
+            sqldb["sqldb-ticketing-dev-swedencentral<br/>Serverless GP_S_Gen5, min 0.5 vCore"]
+            dns["Private DNS zone<br/>privatelink.database.windows.net"]
+            law["log-ticketing-dev-swedencentral<br/>Log Analytics workspace"]
+            appi["appi-ticketing-dev-swedencentral<br/>workspace-based App Insights"]
+            alerts["Metric alerts + availability web test"]
+            idboot["id-dbbootstrap-ticketing-dev-swedencentral<br/>sole Entra SQL administrator"]
+            idapp["id-ticketing-dev-swedencentral<br/>app user-assigned identity"]
+        end
+    end
+
+    corp -->|HTTPS 443| app
+    app -->|regional VNet integration| snetpe
+    pep --> sql
+    sql --- sqldb
+    pep -.->|A record| dns
+    dns -.-> vnet
+    app -->|SqlClient · Active Directory Default| pep
+    app --> appi
+    appi --> law
+    alerts --> appi
+    idapp -.->|app→SQL auth| app
+    bootstrap -->|creates contained DB user + Tickets table| pep
+    idboot -.->|Entra admin| sql
+    idboot -.-> bootstrap
+```
+
+## 2. Resource table
+
+CAF naming: `<type>-<workload>-<environment>-<region>` with `workload=ticketing`, `environment=dev`,
+`region=swedencentral`. All AVM versions are the exact versions validated in the reference
+implementation under [`infra/`](../infra/) — pin these, never `latest`.
+
+| Purpose | Azure resource type | CAF name | SKU / tier | Why this SKU | AVM module (pinned) |
+|---|---|---|---|---|---|
+| Container for the workload | `Microsoft.Resources/resourceGroups` | `rg-ticketing-dev-swedencentral` | n/a | Single blast radius per environment | native `2024-03-01` |
+| Network isolation boundary | `Microsoft.Network/virtualNetworks` | `vnet-ticketing-dev-swedencentral` | `10.10.0.0/16` | /16 leaves room for future subnets | `avm/res/network/virtual-network:0.10.0` |
+| App tier subnet | subnet (delegated) | `snet-app` `10.10.1.0/24` | delegated `Microsoft.Web/serverFarms` | Delegation is required for regional VNet integration | (in vnet module) |
+| Private endpoint subnet | subnet | `snet-privateendpoints` `10.10.2.0/24` | n/a | Dedicated subnet for the SQL private endpoint NIC | (in vnet module) |
+| Deployment script subnet | subnet (delegated) | `snet-deployscript` `10.10.3.0/24` | delegated `Microsoft.ContainerInstance/containerGroups` | ACI delegation lets the bootstrap run inside the VNet with no public IP | (in vnet module) |
+| App NSG | `Microsoft.Network/networkSecurityGroups` | `nsg-app-dev-swedencentral` | n/a | Least privilege + deny-all inbound @4096 | `avm/res/network/network-security-group:0.5.3` |
+| PE NSG | `Microsoft.Network/networkSecurityGroups` | `nsg-pep-dev-swedencentral` | n/a | Least privilege + deny-all inbound @4096 | `avm/res/network/network-security-group:0.5.3` |
+| Deploy-script NSG | `Microsoft.Network/networkSecurityGroups` | `nsg-deployscript-dev-swedencentral` | n/a | Least privilege + deny-all inbound @4096 | `avm/res/network/network-security-group:0.5.3` |
+| App Service plan | `Microsoft.Web/serverfarms` | `asp-ticketing-dev-swedencentral` | Linux **P0v3** (capacity 1) | Smallest PremiumV3 tier — required for VNet integration and production TLS/health features; Basic/Standard don't meet the security bar | `avm/res/web/serverfarm:0.7.0` |
+| Web app | `Microsoft.Web/sites` | `app-ticketing-dev-swedencentral` | Linux `DOTNETCORE\|8.0` | Runs the .NET 8 API; HTTPS only, TLS 1.2, FTPS disabled, health check `/healthz` | `avm/res/web/site:0.24.0` |
+| App identity | `Microsoft.ManagedIdentity/userAssignedIdentities` | `id-ticketing-dev-swedencentral` | n/a | Stable client ID for app→SQL Entra auth, known before the app exists | `avm/res/managed-identity/user-assigned-identity:0.6.0` |
+| Bootstrap identity | `Microsoft.ManagedIdentity/userAssignedIdentities` | `id-dbbootstrap-ticketing-dev-swedencentral` | n/a | Sole Entra SQL administrator; runs the bootstrap script | `avm/res/managed-identity/user-assigned-identity:0.6.0` |
+| SQL logical server | `Microsoft.Sql/servers` | `sql-ticketing-dev-swedencentral` | n/a | `publicNetworkAccess: Disabled`, Entra-only auth, no SQL logins | `avm/res/sql/server:0.22.0` |
+| SQL database | `Microsoft.Sql/servers/databases` | `sqldb-ticketing-dev-swedencentral` | **GP_S_Gen5**, capacity 1, min 0.5 vCore | Serverless General Purpose auto-pauses when idle — cheapest fit for a bursty internal workload | (in sql module) |
+| Private endpoint + DNS | `Microsoft.Network/privateEndpoints` + `Microsoft.Network/privateDnsZones` | `pep-sql-ticketing-dev-swedencentral`, `privatelink.database.windows.net` | n/a | Only path to SQL; DNS zone linked to the VNet resolves the server to `10.10.2.x` | `avm/res/network/private-dns-zone:0.8.1` |
+| Log Analytics | `Microsoft.OperationalInsights/workspaces` | `log-ticketing-dev-swedencentral` | PerGB2018 | Backing store for workspace-based App Insights and platform diagnostics | `avm/res/operational-insights/workspace:0.16.1` |
+| Application Insights | `Microsoft.Insights/components` | `appi-ticketing-dev-swedencentral` | Workspace-based | Required by the spec; connection string injected as an app setting | `avm/res/insights/component:0.8.0` |
+| Availability web test | `Microsoft.Insights/webtests` | (baseline) | Standard | Probes `/readyz` for the SRE-Agent labs | `avm/res/insights/webtest:0.3.2` |
+| Metric alerts | `Microsoft.Insights/metricAlerts` | (baseline) | n/a | HTTP 5xx, response time, health check, readiness, SQL CPU | `avm/res/insights/metric-alert:0.4.1` |
+| Bootstrap storage | `Microsoft.Storage/storageAccounts` | (deploy-script backing) | Standard_LRS | Required scratch store for the deployment script container | `avm/res/storage/storage-account:0.33.0` |
+| Bootstrap script | `Microsoft.Resources/deploymentScripts` | (AzureCLI) | n/a | Creates the app's contained DB user + `Tickets` table; `cleanupPreference: OnExpiration`, `retentionInterval: P1D` | `avm/res/resources/deployment-script:0.5.2` |
+
+## 3. Security — how each requirement is met
+
+| Requirement (workload spec) | How the design meets it |
+|---|---|
+| Database not publicly reachable | `sql` server sets `publicNetworkAccess: Disabled`. The only network path is `pep-sql-…` in `snet-privateendpoints`. The private DNS zone `privatelink.database.windows.net` is linked to the VNet so the FQDN resolves to a `10.10.2.x` address. No firewall rule opens a public route. |
+| Managed identity for app→database | The web app authenticates with `Microsoft.Data.SqlClient` using `Authentication=Active Directory Default` against the user-assigned identity `id-ticketing-…`. SQL uses Entra-only authentication; there are no SQL logins and no password anywhere. |
+| No secrets in code, outputs or app settings | Connection is built from server FQDN + identity client ID only. No password, connection secret or key is emitted to any template, output, app setting or workflow. Application Insights is wired via its connection string (telemetry endpoint, not a credential). |
+| NSGs least privilege + deny-all inbound | All three subnets carry an NSG. Each NSG ends with an explicit deny-all inbound rule at priority 4096; only the specific inbound flows each subnet needs are allowed above it. |
+| TLS 1.2 minimum, HTTPS only, FTPS disabled | The web app sets `httpsOnly: true`, `minTlsVersion: 1.2`, and FTPS disabled. |
+| Bootstrap runs privately, no public IP | The bootstrap `deploymentScripts` resource is VNet-integrated into `snet-deployscript` (delegated to ACI) and has no public IP. Its identity `id-dbbootstrap-…` is the **sole** Entra SQL administrator. |
+| Bootstrap logs survive the run | The script uses `cleanupPreference: OnExpiration` with `retentionInterval: P1D`, so the container group and its logs are not torn down the moment the script reports back. |
+| GitHub Actions → Azure auth | Deployment authenticates with **OIDC federated credentials**, never a stored client secret. *(Pipeline wiring is a track deliverable; the design mandates OIDC.)* |
+| Parameterised SQL access | The app uses parameterised queries via `Microsoft.Data.SqlClient`; no input is concatenated into SQL text. |
+
+## 4. Well-Architected trade-offs
+
+| Pillar | Decision taken | What was traded away |
+|---|---|---|
+| **Reliability** | Single region (`swedencentral`), single App Service instance (P0v3, capacity 1), serverless SQL. Health check `/healthz` plus a `/readyz` availability web test drive alerts. | No zone redundancy, no multi-region failover, no read replica. Serverless SQL auto-pause adds cold-start latency on the first request after idle. Multi-region/zone-redundant is a documented stretch goal, not baseline. |
+| **Security** | Private endpoint only to SQL, Entra-only auth, managed identity everywhere, NSGs with deny-all inbound, TLS 1.2 / HTTPS only / FTPS off, bootstrap identity as sole SQL admin. | Operational friction: no public SQL access means all DB administration must go through the VNet (bootstrap script or a jump path). No password fallback if Entra is unavailable. |
+| **Cost** | Smallest PremiumV3 plan (P0v3), serverless GP_S_Gen5 SQL auto-pausing at 0.5 vCore min, single Log Analytics workspace. | Performance headroom and always-warm capacity. P0v3 is chosen over Basic/Standard purely because VNet integration and the security posture require Premium — paying for a security floor, not raw performance. |
+| **Operational excellence** | Fully modular Bicep from version-pinned AVM, `.bicepparam` for environment values, `validate-infra.sh` gate, deploy-script bootstrap for schema, baseline alerts wired to App Insights. | Pinned versions require deliberate upgrades (intentional — supports desired-state discipline in expert Lab 2). Alert *routing* is left as an environment-specific extension point (expert Lab 3). |
+| **Performance efficiency** | P0v3 + serverless SQL sized for a low-traffic internal tool; workspace-based App Insights for latency signals. | No autoscale rules and no caching tier. Under sustained load the single instance and 0.5-vCore floor would need to be revisited; acceptable for the stated internal, bursty usage. |
+
+## 5. Open questions
+
+These are not settled by the requirement document. `@implementer` must not invent answers — they are
+flagged for the track owner.
+
+1. **Client network reachability.** The spec says "reachable over HTTPS from the corporate network"
+   but the baseline exposes the App Service on its public hostname (secured by HTTPS/TLS, not network
+   isolation). Is corporate-network-only reachability required at the baseline (private endpoint /
+   access restrictions on the app), or is it deferred to a later lab? The reference implementation
+   leaves the app publicly addressable.
+2. **`environment` scope.** Only `dev` is designed here. `tst` and `prd` are allowed parameter values
+   — do other environments need distinct address spaces, SKUs or region, and are they in scope now?
+3. **Alert routing / action groups.** The baseline defines alert *rules* but not where they route.
+   This is explicitly an expert Lab 3 extension point — confirm no action group is required at
+   baseline.
+4. **Region for expert track.** `swedencentral` is the default. If the team intends the expert SRE
+   Agent labs, confirm the SRE Agent is available in the chosen region.
+5. **Data retention & backup policy.** Log Analytics retention and SQL backup/PITR settings are not
+   specified. Accept AVM/service defaults, or set explicit values?
+
+## Handover to @implementer
+
+Once the open questions above are answered, hand off to `@implementer`.
+
+**Decisions now fixed — do not revisit without an architecture change:**
+
+- Subscription-scoped deployment; one resource group `rg-ticketing-dev-swedencentral`.
+- Address space `10.10.0.0/16` with the three /24 subnets exactly as named, including the
+  `Microsoft.Web/serverFarms` and `Microsoft.ContainerInstance/containerGroups` delegations.
+- Every subnet has an NSG with an explicit deny-all inbound rule at priority 4096.
+- SQL: `publicNetworkAccess: Disabled`, Entra-only auth, reached solely via `pep-sql-…` and
+  `privatelink.database.windows.net`. Database is **never** internet-reachable.
+- App→SQL and all Azure-to-Azure auth uses managed identity. **No** password, connection secret or
+  key in any template, output, app setting or workflow.
+- Bootstrap identity `id-dbbootstrap-…` is the sole Entra SQL administrator; the bootstrap script is
+  VNet-integrated with no public IP and uses `cleanupPreference: OnExpiration` /
+  `retentionInterval: P1D`.
+- App Service plan **P0v3** Linux; web app `httpsOnly: true`, `minTlsVersion: 1.2`, FTPS disabled,
+  health check `/healthz`.
+- SQL database **serverless GP_S_Gen5**, min 0.5 vCore.
+- Workspace-based Application Insights on a single Log Analytics workspace.
+- Compose from the version-pinned AVM modules listed in the resource table — never `latest`.
+- CAF naming and the four required tags (`environment`, `workload`, `owner`, `costCenter`) on every
+  resource.

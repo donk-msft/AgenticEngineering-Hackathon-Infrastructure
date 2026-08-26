@@ -11,7 +11,7 @@ expert track without redesigning the workload.
 @description('Workload name used in CAF resource names, e.g. rg-<workload>-<env>-<region>.')
 @minLength(3)
 @maxLength(13)
-param workload string = 'ticketing'
+param workload string
 
 @description('Environment short name.')
 @allowed([
@@ -19,16 +19,28 @@ param workload string = 'ticketing'
   'tst'
   'prd'
 ])
-param environment string = 'dev'
+param environment string
 
 @description('Azure region for all resources. Use a region where the Azure SRE Agent is available if you plan to do the expert track.')
-param location string = 'swedencentral'
+param location string
 
 @description('Owner tag value (team or e-mail address).')
-param owner string = 'hackathon-team'
+param owner string
 
 @description('Cost centre tag value.')
-param costCenter string = 'hackathon'
+param costCenter string
+
+@description('Address space of the workload virtual network.')
+param vnetAddressPrefix string
+
+@description('Address prefix of the delegated App Service subnet.')
+param appSubnetPrefix string
+
+@description('Address prefix of the SQL private endpoint subnet.')
+param privateEndpointSubnetPrefix string
+
+@description('Address prefix of the private deployment script subnet.')
+param deployScriptSubnetPrefix string
 
 var regionToken = location
 var resourceGroupName = 'rg-${workload}-${environment}-${regionToken}'
@@ -67,23 +79,16 @@ module networking 'modules/networking.bicep' = {
     location: location
     tags: tags
     logAnalyticsWorkspaceId: monitoring.outputs.logAnalyticsWorkspaceId
+    addressPrefix: vnetAddressPrefix
+    appSubnetPrefix: appSubnetPrefix
+    privateEndpointSubnetPrefix: privateEndpointSubnetPrefix
+    deployScriptSubnetPrefix: deployScriptSubnetPrefix
   }
 }
 
 module identityBootstrap 'modules/identity-bootstrap.bicep' = {
   scope: rg
   name: 'identity-bootstrap'
-  params: {
-    workload: workload
-    environment: environment
-    location: location
-    tags: tags
-  }
-}
-
-module identityApp 'modules/identity-app.bicep' = {
-  scope: rg
-  name: 'identity-app'
   params: {
     workload: workload
     environment: environment
@@ -118,9 +123,6 @@ module webapp 'modules/webapp.bicep' = {
     appSubnetId: networking.outputs.appSubnetId
     applicationInsightsConnectionString: monitoring.outputs.applicationInsightsConnectionString
     sqlConnectionString: database.outputs.connectionString
-    appIdentityResourceId: identityApp.outputs.resourceId
-    appIdentityPrincipalId: identityApp.outputs.principalId
-    appIdentityClientId: identityApp.outputs.clientId
   }
 }
 
@@ -140,7 +142,6 @@ module databaseBootstrap 'modules/database-bootstrap.bicep' = {
     databaseName: database.outputs.databaseName
     webAppName: webapp.outputs.webAppName
     webAppPrincipalId: webapp.outputs.principalId
-    webAppClientId: identityApp.outputs.clientId
   }
 }
 
@@ -160,11 +161,26 @@ module alerts 'modules/alerts.bicep' = {
   }
 }
 
+@description('Name of the workload resource group.')
 output resourceGroupName string = rg.name
+
+@description('Name of the deployed web app.')
 output webAppName string = webapp.outputs.webAppName
+
+@description('Default hostname of the deployed web app.')
 output webAppHostName string = webapp.outputs.defaultHostName
+
+@description('Name of the Azure SQL logical server.')
 output sqlServerName string = database.outputs.sqlServerName
+
+@description('Name of the Azure SQL database.')
 output databaseName string = database.outputs.databaseName
+
+@description('Resource id of the Log Analytics workspace.')
 output logAnalyticsWorkspaceId string = monitoring.outputs.logAnalyticsWorkspaceId
+
+@description('Name of the workspace-based Application Insights component.')
 output applicationInsightsName string = monitoring.outputs.applicationInsightsName
+
+@description('Name of the managed identity used for database bootstrap.')
 output databaseBootstrapIdentityName string = identityBootstrap.outputs.name

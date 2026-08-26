@@ -9,7 +9,7 @@
 # the sole Microsoft Entra administrator on the SQL logical server.
 set -euo pipefail
 
-for var in SQL_SERVER_NAME DATABASE_NAME WEB_APP_NAME WEB_APP_PRINCIPAL_ID WEB_APP_CLIENT_ID MANAGED_IDENTITY_CLIENT_ID; do
+for var in SQL_SERVER_NAME DATABASE_NAME WEB_APP_NAME WEB_APP_PRINCIPAL_ID MANAGED_IDENTITY_CLIENT_ID; do
   if [[ -z "${!var:-}" ]]; then
     echo "Required environment variable '${var}' was not set." >&2
     exit 1
@@ -21,8 +21,12 @@ if [[ ! "${WEB_APP_PRINCIPAL_ID}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{
   exit 1
 fi
 
-if [[ ! "${WEB_APP_CLIENT_ID}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
-  echo "WEB_APP_CLIENT_ID must be a Microsoft Entra application (client) ID." >&2
+if ! web_app_client_id="$(az ad sp show --id "${WEB_APP_PRINCIPAL_ID}" --query appId --output tsv)"; then
+  echo "The bootstrap identity could not read the web app service principal. An Entra administrator must approve Microsoft Graph Application.Read.All for this identity before deployment." >&2
+  exit 1
+fi
+if [[ ! "${web_app_client_id}" =~ ^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$ ]]; then
+  echo "Could not resolve the web app system-assigned identity client ID." >&2
   exit 1
 fi
 
@@ -59,7 +63,7 @@ sqlcmd --version
 
 sql_host="${SQL_SERVER_NAME}.database.windows.net"
 app_principal="${WEB_APP_NAME}"
-app_principal_sid="$(python3 -c 'import sys, uuid; print(f"0x{uuid.UUID(sys.argv[1]).bytes_le.hex().upper()}")' "${WEB_APP_CLIENT_ID}")"
+app_principal_sid="$(python3 -c 'import sys, uuid; print(f"0x{uuid.UUID(sys.argv[1]).bytes_le.hex().upper()}")' "${web_app_client_id}")"
 
 sql=$(cat <<EOF
 DECLARE @ExpectedSid VARBINARY(16) = CONVERT(VARBINARY(16), ${app_principal_sid}, 1);

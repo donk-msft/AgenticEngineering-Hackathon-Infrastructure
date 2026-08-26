@@ -16,16 +16,16 @@ param tags object
 param logAnalyticsWorkspaceId string
 
 @description('Address space of the virtual network.')
-param addressPrefix string = '10.10.0.0/16'
+param addressPrefix string
 
 @description('Address prefix of the delegated App Service subnet.')
-param appSubnetPrefix string = '10.10.1.0/24'
+param appSubnetPrefix string
 
 @description('Address prefix of the private endpoint subnet.')
-param privateEndpointSubnetPrefix string = '10.10.2.0/24'
+param privateEndpointSubnetPrefix string
 
 @description('Address prefix of the deployment script subnet (delegated to Microsoft.ContainerInstance/containerGroups).')
-param deployScriptSubnetPrefix string = '10.10.3.0/24'
+param deployScriptSubnetPrefix string
 
 var suffix = '${workload}-${environment}-${location}'
 
@@ -166,7 +166,14 @@ module virtualNetwork 'br/public:avm/res/network/virtual-network:0.10.0' = {
   }
 }
 
+@description('Resource id of the workload virtual network.')
 output virtualNetworkId string = virtualNetwork.outputs.resourceId
+
+@description('Resource id of the delegated App Service subnet.')
 output appSubnetId string = virtualNetwork.outputs.subnetResourceIds[0]
+
+@description('Resource id of the SQL private endpoint subnet.')
 output privateEndpointSubnetId string = virtualNetwork.outputs.subnetResourceIds[1]
+
+@description('Resource id of the delegated deployment script subnet.')
 output deployScriptSubnetId string = virtualNetwork.outputs.subnetResourceIds[2]

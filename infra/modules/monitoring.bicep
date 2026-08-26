@@ -41,8 +41,13 @@ module applicationInsights 'br/public:avm/res/insights/component:0.8.0' = {
   }
 }
 
+@description('Resource id of the Log Analytics workspace.')
 output logAnalyticsWorkspaceId string = logAnalytics.outputs.resourceId
+
+@description('Name of the Log Analytics workspace.')
 output logAnalyticsWorkspaceName string = logAnalytics.outputs.name
+
+@description('Name of the workspace-based Application Insights component.')
 output applicationInsightsName string = applicationInsights.outputs.name
 
 @description('Application Insights connection string. Treated as a configuration value, not a secret credential.')

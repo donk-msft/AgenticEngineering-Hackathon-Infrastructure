@@ -2,7 +2,10 @@
 name: tester
 description: Validates the implemented infrastructure and writes docs/test-results.md.
 tools: ['search', 'edit', 'execute']
-handoffs: ['documenter']
+handoffs:
+- label: 'Document validation results'
+  agent: 'documenter'
+  prompt: 'Review the validation status, evidence file, and unresolved live-environment checks.'
 ---
 
 ## Role

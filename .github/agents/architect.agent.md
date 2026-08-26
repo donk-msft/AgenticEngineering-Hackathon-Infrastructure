@@ -2,7 +2,10 @@
 name: architect
 description: Designs the Azure architecture for the Contoso Ticketing workload and produces docs/architecture.md.
 tools: ['search', 'edit', 'fetch']
-handoffs: ['implementer']
+handoffs:
+   - label: Hand off to implementer
+     agent: implementer
+     prompt: Implement the approved architecture without revisiting the fixed decisions.
 ---
 
 # Role

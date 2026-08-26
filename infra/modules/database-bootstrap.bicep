@@ -36,15 +36,12 @@ param webAppName string
 @description('Object id of the web app system-assigned managed identity.')
 param webAppPrincipalId string
 
-@description('Client id of the App Service managed identity used to derive the SQL contained-user SID (public identifier, not a secret).')
-param webAppClientId string
-
 @description('Forces the deployment script to re-run on every deployment. Defaults to the current UTC timestamp.')
 param baseTime string = utcNow()
 
 var suffix = '${workload}-${environment}-${location}'
-// Storage account name must be <=24 chars, lowercase alphanumeric only.
-var storageAccountName = take('stdbboot${uniqueString(resourceGroup().id, suffix)}', 24)
+var storageNameHash = take(uniqueString(workload, environment, location), 6)
+var storageAccountName = take('st${take(workload, 6)}${environment}${storageNameHash}', 24)
 
 // Deployment scripts running in a private network require an existing storage account
 // with shared key access enabled and network access scoped to the container subnet.
@@ -132,10 +129,6 @@ module databaseBootstrapScript 'br/public:avm/res/resources/deployment-script:0.
         value: webAppPrincipalId
       }
       {
-        name: 'WEB_APP_CLIENT_ID'
-        value: webAppClientId
-      }
-      {
         name: 'MANAGED_IDENTITY_CLIENT_ID'
         value: managedIdentityClientId
       }
@@ -150,3 +143,6 @@ module databaseBootstrapScript 'br/public:avm/res/resources/deployment-script:0.
     storageRoleAssignment
   ]
 }
+
+@description('Name of the database bootstrap deployment script.')
+output deploymentScriptName string = databaseBootstrapScript.outputs.name

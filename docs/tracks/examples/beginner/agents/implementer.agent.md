@@ -1,7 +1,7 @@
 ---
 name: implementer
 description: Implements the approved Bicep plan under infra/ without deploying it.
-tools: ['search', 'edit', 'runCommands']
+tools: ['search', 'edit', 'execute']
 handoffs: ['tester']
 ---
 
