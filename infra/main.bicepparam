@@ -1,7 +1,7 @@
 using 'main.bicep'
 
-param workload = 'ticketing'
+param workload = 'donk'
 param environment = 'dev'
 param location = 'swedencentral'
-param owner = 'hackathon-team'
-param costCenter = 'hackathon'
+param owner = 'Don Koning'
+param costCenter = 'free'
