@@ -1,6 +1,6 @@
 using 'main.bicep'
 
-param workload = 'ticketing'
+param workload = 'donticket'
 param environment = 'dev'
 param location = 'swedencentral'
 param owner = 'hackathon-team'
